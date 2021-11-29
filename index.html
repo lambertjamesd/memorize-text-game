@@ -2,125 +2,10 @@
 <html>
     <head>
         <title>Young Mens Theme</title>
-        <style>
-            .paragraph-list {
-                display: flex;
-                flex-direction: column;
-                padding: 60px;
-                overflow-y: auto;
-                flex-grow: 1;
-                flex-shrink: 1;
-            }
-
-            .paragraph {
-                padding: 20px;
-                margin: 10px;
-                border-radius: 10px;
-                border: solid 1px #cbccce;
-                text-align: center;
-                font-family: Arial, Helvetica, sans-serif;
-                font-size: 36px;
-            }
-            
-            .word-list {
-                display: flex;
-                flex-direction: row;
-                flex-wrap: wrap;
-                align-items: flex-start;
-            }
-
-            .word {
-                border-radius: 10px;
-                border: solid 1px #cbccce;
-                padding: 20px;
-                margin: 10px;
-                font-family: Arial, Helvetica, sans-serif;
-                font-size: 42px;
-                white-space: nowrap
-            }
-
-            .background {
-                background: #00718f;
-                margin: 0;
-                pad: 0;
-            }
-
-            .app {
-                top: 0;
-                bottom: 0;
-                left: 20px;
-                right: 20px;
-                border-right: #16afc8 solid 6px;
-                border-left: #16afc8 solid 6px;
-                background: white;
-                position: absolute;
-                display: flex;
-                flex-direction: column;
-            }
-
-            hr {
-                border-color: #cccdcf;
-                margin: 40px 120px;
-            }
-
-            .button-list {
-                display: flex;
-                justify-content: space-between;
-                padding: 0px 80px 40px;
-                align-items: center;
-            }
-
-            .button {
-                font-family: Arial, Helvetica, sans-serif;
-                font-size: 42px;
-
-                background: #16afc8;
-                border-radius: 20px;
-                padding: 20px 40px;
-                color: white;
-                border: none;
-            }
-
-            .button.selected {
-                background: #00718f;
-            }
-
-            .button.disabled {
-                background: #cbccce;
-            }
-
-            .timer {
-                font-family: Arial, Helvetica, sans-serif;
-                font-size: 42px;
-            }
-
-            label {
-                font-weight: bold;
-                font-family: Arial, Helvetica, sans-serif;
-                font-size: 42px;
-                margin-bottom: 40px;
-            }
-
-            input {
-                font-family:'Courier New', Courier, monospace;
-                font-size: 42px;
-                height: 80px;
-                border: #cccdcf solid 1px;
-                border-radius: 10px;
-                padding: 0px 30px;
-            }
-        </style>
+        <script src="game.js"></script>
+        <link rel="stylesheet" type="text/css" href="style.css">
     </head>
     <body class="background">
-        <script>
-            const textSource = `
-                I am a beloved son of God, and He has a work for me to do.
-                With all my heart, might, mind, and strength, I will love God, keep my covenants, and use His priesthood to serve others, beginning in my own home.
-                As I strive to serve, exercise faith, repent, and improve each day, I will qualify to receive temple blessings and the enduring joy of the gospel.
-                I will prepare to become a diligent missionary, loyal husband, and loving father by being a true disciple of Jesus Christ.
-                I will help prepare the world for the Savior’s return by inviting all to come unto Christ and receive the blessings of His Atonement.
-                `;
-        </script>
         <!-- <div class="app">
             <div class="paragraph-list">
                 <div class="paragraph">I am a beloved son of God, and He has a work for me to do.</div>
@@ -132,34 +17,34 @@
             <hr>
             <div class="button-list">
                 <div class="timer">34.4s</div>
-                <button class="button primary">Check</button>
+                <button class="button">Check</button>
             </div>
         </div> -->
         
-        <div class="app">
+        <!-- <div class="app">
             <div class="paragraph-list">
                 <label>Room</label>
                 <input>
                 <hr>
                 <label>Difficulty</label>
                 <div class="button-list">
-                    <button class="button primary selected">Easy</button>
-                    <button class="button primary">Medium</button>
-                    <button class="button primary">Hard</button>
+                    <button class="button selected">Easy</button>
+                    <button class="button">Medium</button>
+                    <button class="button">Hard</button>
                 </div>
                 <hr>
                 <label>Paragraph</label>
                 <div class="button-list">
-                    <button class="button primary disabled">1</button>
-                    <button class="button primary disabled">2</button>
-                    <button class="button primary disabled">3</button>
-                    <button class="button primary disabled">4</button>
-                    <button class="button primary disabled">5</button>
+                    <button class="button disabled">1</button>
+                    <button class="button disabled">2</button>
+                    <button class="button disabled">3</button>
+                    <button class="button disabled">4</button>
+                    <button class="button disabled">5</button>
                 </div>
                 <hr>
-                <button class="button primary">Start</button>
+                <button class="button">Start</button>
             </div>
-        </div>
+        </div> -->
 
         <!-- <div class="app">
             <div class="paragraph-list">
@@ -176,6 +61,7 @@
                 <div class="timer">34.4s</div>
                 <button class="button primary">Check</button>
             </div>
-        </div> -->
-    </body>
+        </div>
+    </body> -->
+    <script>gameStart()</script>
 </html>
