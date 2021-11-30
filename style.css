@@ -8,8 +8,12 @@
     flex-shrink: 1;
 }
 
+.drag-block {
+    position: fixed;
+}
+
 .countdown-container {
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
     bottom: 0;
@@ -40,6 +44,7 @@
     padding: 20px;
     margin: 10px;
     border-radius: 10px;
+    background-color: white;
     border: solid 1px #cbccce;
     text-align: center;
     font-family: Arial, Helvetica, sans-serif;

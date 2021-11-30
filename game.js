@@ -308,12 +308,128 @@ function createMainMenu(onStart) {
     return result;
 }
 
+function createDraggableBlock(textContent, type, dragInfo, allBlocks) {
+    var dom = document.createElement('div');
+    var result = {
+        dom: dom,
+        text: textContent,
+    };
+    dom.classList.add(type);
+
+    function isPointBefore(block, x, y) {
+        var blockPos = block.dom.getBoundingClientRect();
+        if (type === 'paragraph') {
+            return y < blockPos.top + blockPos.height * 0.5;
+        } else {
+            // TODO
+            return true;
+        }
+    }
+
+    dom.addEventListener('touchstart', function(event) {
+        dragInfo.cancel();
+
+        if (event.touches.length > 1) {
+            return;
+        }
+
+        var startTouch = event.touches.item(0);
+
+        var startY = startTouch.clientY;
+        var startX = startTouch.clientX;
+
+        function onDragMove(event) {
+            var newPos = event.touches.item(0);
+
+            var currentIndex = allBlocks.indexOf(result);
+
+            if (currentIndex === -1) {
+                return;
+            }
+
+            var newIndex = 0;
+
+            while (newIndex < allBlocks.length && (newIndex === currentIndex || !isPointBefore(allBlocks[newIndex], newPos.clientX, newPos.clientY))) {
+                ++newIndex;
+            }
+
+            if (newIndex > currentIndex) {
+                --newIndex;
+            }
+
+            if (newIndex !== currentIndex) {
+                var posBefore = dom.getBoundingClientRect();
+
+                allBlocks.splice(currentIndex, 1);
+                allBlocks.splice(newIndex, 0, result);
+
+                var parent = dom.parentElement;
+                parent.removeChild(dom);
+
+                if (newIndex + 1 < allBlocks.length) {
+                    parent.insertBefore(dom, allBlocks[newIndex + 1].dom);
+                } else {
+                    parent.append(dom);
+                }
+
+                var posAfter = dom.getBoundingClientRect();
+
+                startY += posAfter.top - posBefore.top;
+                startX += posAfter.left - posBefore.left;
+            }
+            
+            dom.style.top = (newPos.clientY - startY) + 'px';
+            dom.style.left = (newPos.clientX - startX) + 'px';
+        }
+
+        function onDragEnd() {
+            dragInfo.cancel();
+        }
+
+        document.body.addEventListener('touchmove', onDragMove);
+        document.body.addEventListener('touchend', onDragEnd);
+
+        dom.style.position = 'relative';
+        dom.style.zIndex = '1';
+
+        dragInfo.currentBlock = result;
+        dragInfo.touchId = startTouch.identifier;
+        dragInfo.cancel = function() {
+            if (dragInfo.currentBlock === result) {
+                dom.style.position = 'relative';
+                dom.style.top = '0px';
+                dom.style.left = '0px';
+                dom.style.zIndex = '';
+                        
+                document.body.removeEventListener('touchmove', onDragMove);
+                document.body.removeEventListener('touchend', onDragEnd);
+
+                dragInfo.currentBlock = undefined;
+                dragInfo.touchId = undefined;
+                dragInfo.cancel = function() {};
+            }
+        };
+    });
+
+    allBlocks.push(result);
+
+    dom.appendChild(document.createTextNode(textContent));
+
+    return result;
+}
+
 function createWordList(textBlocks, parent, type) {
+    var dragInfo = {
+        currentBlock: undefined, 
+        touchId: undefined,
+        cancel: function () {},
+    };
+
+    var allBlocks = [];
+
     for (var i = 0; i < textBlocks.length; ++i) {
-        var block = document.createElement('div');
-        block.classList.add(type);
-        block.appendChild(document.createTextNode(textBlocks[i]));
-        parent.appendChild(block);
+        var block = createDraggableBlock(textBlocks[i], type, dragInfo, allBlocks);
+        parent.appendChild(block.dom);
     }
 }
 
