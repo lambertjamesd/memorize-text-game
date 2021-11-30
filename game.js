@@ -1,5 +1,5 @@
 
-var textBlocks = [
+var textSource = [
     [
         'I am a', 'beloved son of God,', 'and', 'He has a', 'work for me to do'
     ],
@@ -308,6 +308,94 @@ function createMainMenu(onStart) {
     return result;
 }
 
+function createWordList(textBlocks, parent, type) {
+    for (var i = 0; i < textBlocks.length; ++i) {
+        var block = document.createElement('div');
+        block.classList.add(type);
+        block.appendChild(document.createTextNode(textBlocks[i]));
+        parent.appendChild(block);
+    }
+}
+
+function createCountdownTimer(seconds, onTimeout) {
+    var dom = document.createElement('div');
+    dom.classList.add('countdown-container');
+
+    var numberDisplay;
+
+    function showNumber(value) {
+        numberDisplay = document.createElement('div');
+        numberDisplay.classList.add('countdown-number');
+        numberDisplay.appendChild(document.createTextNode(String(value)));
+        dom.appendChild(numberDisplay);
+    }
+
+    var intervalId = setInterval(function() {
+        dom.removeChild(numberDisplay);
+        --seconds;
+        if (seconds) {
+            showNumber(seconds);
+        } else {
+            clearInterval(intervalId);
+            onTimeout();
+        }
+    }, 1000);
+    showNumber(seconds);
+
+    var result = {
+        dom: dom,
+    };
+
+    return result;
+}
+
+function createTimer() {
+    var dom = document.createElement('div');
+    dom.classList.add('timer');
+    dom.appendChild(document.createTextNode('0:00.0'));
+
+    return {
+        dom: dom,
+    };
+}
+
+function createGame(textBlocks, gameType) {
+    var dom = document.createElement('div');
+    dom.classList.add('app');
+    var result = {
+        dom: dom,
+    };
+
+    var list = document.createElement('div');
+    list.classList.add('paragraph-list');
+    dom.appendChild(list);
+
+    createWordList(textBlocks[0], list, gameType);
+
+    dom.appendChild(document.createElement('hr'));
+
+    var buttons = document.createElement('div');
+    buttons.classList.add('button-list');
+
+    var timer = createTimer();
+    buttons.appendChild(timer.dom);
+    
+    var checkButton = createButton('Check', function() {
+        
+    });
+    buttons.appendChild(checkButton.dom);
+
+    dom.appendChild(buttons);
+
+    var countdown = createCountdownTimer(3, function() {
+        dom.removeChild(countdown.dom);
+    });
+
+    dom.appendChild(countdown.dom);
+
+    return result;
+}
+
 var currentMenu = undefined;
 
 function setCurrentMenu(newMenu) {
@@ -321,8 +409,18 @@ function setCurrentMenu(newMenu) {
 
 function showMainMenu() {
     setCurrentMenu(createMainMenu(function(gameOptions) {
-        console.log(gameOptions);
+        if (gameOptions.difficulty === 'E') {
+            startParagraphGame();
+        }
     }));
+}
+
+function startParagraphGame() {
+    var paragraphs = textSource.map(function(textArray) {
+        return textArray.join(' ');
+    });
+
+    setCurrentMenu(createGame([paragraphs], 'paragraph'));
 }
 
 function gameStart() {
