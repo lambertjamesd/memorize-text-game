@@ -349,14 +349,55 @@ function createCountdownTimer(seconds, onTimeout) {
     return result;
 }
 
+function formatTime(millis) {
+    var minutes = Math.floor(millis / (60 * 1000));
+    var seconds = (millis - minutes * 60 * 1000) / 1000;
+    var secondsAsString = seconds.toFixed(1);
+    if (secondsAsString.length < 4) {
+        secondsAsString = '0' + secondsAsString;
+    }
+
+    return String(minutes) + ':' + secondsAsString;
+}
+
 function createTimer() {
     var dom = document.createElement('div');
     dom.classList.add('timer');
     dom.appendChild(document.createTextNode('0:00.0'));
 
-    return {
+    function replaceTime(millis) {
+        dom.removeChild(dom.firstChild);
+        dom.appendChild(document.createTextNode(formatTime(millis)));
+    }
+
+    var result = {
         dom: dom,
     };
+
+    var timerId = undefined;
+    var startTime = undefined;
+
+    result.start = function() {
+        if (!timerId) {
+            startTime = Date.now();
+            timerId = setInterval(function() {
+                result.millis = Date.now() - startTime;
+                replaceTime(result.millis);
+            }, 100);
+        }
+    };
+
+    result.stop = function() {
+        if (timerId) {
+            result.millis = Date.now() - startTime;
+            replaceTime(result.millis);
+            clearInterval(timerId);
+            startTime = undefined;
+            timerId = undefined;
+        }
+    };
+
+    return result;
 }
 
 function createGame(textBlocks, gameType) {
@@ -388,6 +429,7 @@ function createGame(textBlocks, gameType) {
     dom.appendChild(buttons);
 
     var countdown = createCountdownTimer(3, function() {
+        timer.start();
         dom.removeChild(countdown.dom);
     });
 
