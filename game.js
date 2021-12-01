@@ -10,7 +10,7 @@ var textSource = [
     ],
     [
         'As I strive to', 'serve,', 'exercise faith,', 'repent,', 'and', 
-        'improve each day,', ' I will qualify to', 'receive temple blessings', 
+        'improve each day,', 'I will qualify to', 'receive temple blessings', 
         'and', 'the enduring joy', 'of the gospel',
     ],
     [
@@ -326,12 +326,8 @@ function createWinScreen(time, onRetry, onMenu) {
     return result
 }
 
-function createDraggableBlock(textContent, type, dragInfo, allBlocks) {
+function createDraggableBlock(textContent, type, dragInfo, allBlocks, moveBlock) {
     var dom = document.createElement('div');
-    var result = {
-        dom: dom,
-        text: textContent,
-    };
     dom.classList.add(type);
 
     function isPointBefore(block, x, y) {
@@ -346,6 +342,26 @@ function createDraggableBlock(textContent, type, dragInfo, allBlocks) {
             return y < top || y < top + blockPos.height && x < left + blockPos.width * 0.5;
         }
     }
+
+    function animateFrom(posBefore) {
+        var posAfter = dom.getBoundingClientRect()
+        if (posBefore.top !== posAfter.top || posBefore.left !== posAfter.left) {
+            dom.classList.remove('animate-pos');
+            dom.style.top = (posBefore.top - posAfter.top) + 'px';
+            dom.style.left = (posBefore.left - posAfter.left) + 'px';
+            // force a relayout
+            dom.getBoundingClientRect();
+            dom.classList.add('animate-pos');
+            dom.style.top = '0px';
+            dom.style.left = '0px';
+        }
+    }
+    
+    var result = {
+        dom: dom,
+        text: textContent,
+        animateFrom: animateFrom,
+    };
 
     dom.addEventListener('touchstart', function(event) {
         dragInfo.cancel();
@@ -374,49 +390,13 @@ function createDraggableBlock(textContent, type, dragInfo, allBlocks) {
                 ++newIndex;
             }
 
-            if (newIndex > currentIndex) {
-                --newIndex;
-            }
+            var posBefore = dom.getBoundingClientRect();
 
-            if (newIndex !== currentIndex) {
-                var posBefore = allBlocks.map(function(block) {
-                    return block.dom.getBoundingClientRect();
-                });
-
-                allBlocks.splice(newIndex, 0, allBlocks.splice(currentIndex, 1)[0]);
-                posBefore.splice(newIndex, 0, posBefore.splice(currentIndex, 1)[0]);
-
-                var parent = dom.parentElement;
-                parent.removeChild(dom);
-                if (newIndex + 1 < allBlocks.length) {
-                    parent.insertBefore(dom, allBlocks[newIndex + 1].dom);
-                } else {
-                    parent.append(dom);
-                }
-
-                var posAfter = allBlocks.map(function(block) {
-                    return block.dom.getBoundingClientRect();
-                });
-
-                for (var i = 0; i < posBefore.length; ++i) {
-                    var block = allBlocks[i];
-                    if (block === result) {
-                        startY += posAfter[i].top - posBefore[i].top;
-                        startX += posAfter[i].left - posBefore[i].left;
-                    } else {
-                        if (posBefore[i].top !== posAfter[i].top || posBefore[i].left !== posAfter[i].left) {
-                            block.dom.classList.remove('animate-pos');
-                            block.dom.style.top = (posBefore[i].top - posAfter[i].top) + 'px';
-                            block.dom.style.left = (posBefore[i].left - posAfter[i].left) + 'px';
-                            // force a relayout
-                            block.dom.getBoundingClientRect();
-                            block.dom.classList.add('animate-pos');
-                            block.dom.style.top = '0px';
-                            block.dom.style.left = '0px';
-                        }
-                    }
-                }
-            }
+            moveBlock(currentIndex, newIndex, result);
+            
+            var posAfter = dom.getBoundingClientRect();
+            startY += posAfter.top - posBefore.top;
+            startX += posAfter.left - posBefore.left;
             
             dom.style.top = (newPos.clientY - startY) + 'px';
             dom.style.left = (newPos.clientX - startX) + 'px';
@@ -471,8 +451,41 @@ function createWordList(textBlocks, parent, type) {
 
     var allBlocks = [];
 
+    function moveBlock(from, to, dragging) {
+        if (from === to) {
+            return;
+        }
+        
+        if (to > from) {
+            --to;
+        }
+
+        var posBefore = allBlocks.map(function(block) {
+            return block.dom.getBoundingClientRect();
+        });
+
+        var blockToMove = allBlocks[from];
+
+        allBlocks.splice(to, 0, allBlocks.splice(from, 1)[0]);
+        posBefore.splice(to, 0, posBefore.splice(from, 1)[0]);
+
+        parent.removeChild(blockToMove.dom);
+        if (to + 1 < allBlocks.length) {
+            parent.insertBefore(blockToMove.dom, allBlocks[to + 1].dom);
+        } else {
+            parent.append(blockToMove.dom);
+        }
+
+        for (var i = 0; i < posBefore.length; ++i) {
+            var block = allBlocks[i];
+            if (block !== dragging) {
+                block.animateFrom(posBefore[i]);
+            }
+        }
+    }
+
     for (var i = 0; i < textBlocks.length; ++i) {
-        var block = createDraggableBlock(textBlocks[i], type, dragInfo, allBlocks);
+        var block = createDraggableBlock(textBlocks[i], type, dragInfo, allBlocks, moveBlock);
         parent.appendChild(block.dom);
     }
 
@@ -481,7 +494,13 @@ function createWordList(textBlocks, parent, type) {
             return allBlocks.map(function(block) {
                 return block.text;
             }).join(' ');
-        }
+        },
+        getTextArray: function() {
+            return allBlocks.map(function(block) {
+                return block.text;
+            });
+        },
+        move: moveBlock,
     };
 }
 
@@ -607,17 +626,95 @@ function createTimer() {
     return result;
 }
 
-function createGame(textBlocks, gameType) {
+function xmur3(str) {
+    var i;
+    var h;
+    for(i = 0, h = 1779033703 ^ str.length; i < str.length; i++) {
+        h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+        h = h << 13 | h >>> 19;
+    }
+    return function() {
+        h = Math.imul(h ^ h >>> 16, 2246822507);
+        h = Math.imul(h ^ h >>> 13, 3266489909);
+        return (h ^= h >>> 16) >>> 0;
+    }
+}
+
+function shuffleBlocks(blockInput, randomSource) {
+    var zipped;
+
+    function isInOrder(zippedBlocks) {
+        for (var i = 0; i + 1 < zippedBlocks.length; ++i) {
+            if (zippedBlocks[i].order > zippedBlocks[i+1].order) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+    
+    do {
+        zipped = blockInput.map(function(block) {
+            return {
+                block: block,
+                order: randomSource(),
+            };
+        });
+    } while (isInOrder(zipped));
+
+    zipped.sort(function(a, b) {
+        return a.order - b.order;
+    });
+
+    return zipped.map(function(entry) {
+        return entry.block;
+    });
+}
+
+function findHint(solution, currentConfiguration) {
+    var moveTo = 0;
+
+    while (moveTo < solution.length && solution[moveTo] === currentConfiguration[moveTo]) {
+        ++moveTo;
+    }
+
+    if (moveTo === solution.length) {
+        // already solved
+        return undefined;
+    }
+
+    var searchFor = solution[moveTo];
+    var moveFrom = moveTo;
+
+    while (moveFrom < currentConfiguration.length && currentConfiguration[moveFrom] !== searchFor) {
+        ++moveFrom;
+    }
+
+    if (moveFrom === currentConfiguration.length) {
+        // shouldn't happen
+        return undefined;
+    }
+
+    return {
+        to: moveTo,
+        from: moveFrom,
+    };
+}
+
+function createGame(textBlocks, gameType, randomSeed) {
     var dom = document.createElement('div');
     dom.classList.add('app');
     var result = {
         dom: dom,
     };
 
+    var randomSource = xmur3(randomSeed || String(Date.now()));
+
     var currentParagraph = 0;
     var rootList;
     var wordList;
     var currentSolution;
+    var currentHintCost = 3;
 
     function renderCurrentParagraph() {
         var insertBefore;
@@ -642,7 +739,7 @@ function createGame(textBlocks, gameType) {
             targetList = words;
         }
     
-        wordList = createWordList(textBlocks[currentParagraph], targetList, gameType);
+        wordList = createWordList(shuffleBlocks(textBlocks[currentParagraph], randomSource), targetList, gameType);
     }
 
     renderCurrentParagraph(0);
@@ -654,20 +751,39 @@ function createGame(textBlocks, gameType) {
 
     var timer = createTimer();
     buttons.appendChild(timer.dom);
+
+    function triggerVictory() {
+        ++currentParagraph;
+        if (currentParagraph < textBlocks.length) {
+            renderCurrentParagraph();
+        } else {
+            timer.stop();
+            createWinScreen(timer.millis, function() {
+                setCurrentMenu(createGame(textBlocks, gameType, randomSeed));
+            }, function() {
+                showMainMenu();
+            });
+        }
+    }
+
+    var hintButton = createButton('Hint', function() {
+        var hint = findHint(textBlocks[currentParagraph], wordList.getTextArray());
+        timer.addTime(currentHintCost * 1000);
+        currentHintCost += 2;
+
+        if (!hint) {
+            triggerVictory();
+            return;
+        }
+
+        wordList.move(hint.from, hint.to);
+    });
+    buttons.appendChild(hintButton.dom);
+
     
     var checkButton = createButton('Check', function() {
         if (currentSolution === wordList.getText()) {
-            ++currentParagraph;
-            if (currentParagraph < textBlocks.length) {
-                renderCurrentParagraph();
-            } else {
-                timer.stop();
-                createWinScreen(timer.millis, function() {
-                    setCurrentMenu(createGame(textBlocks, gameType));
-                }, function() {
-                    showMainMenu();
-                });
-            }
+            triggerVictory();
         } else {
             timer.addTime(1000);
         }
@@ -704,34 +820,34 @@ function showMainMenu() {
         });
 
         if (gameOptions.difficulty === 'E') {
-            startEasyGame();
+            startEasyGame(gameOptions.roomID);
         } else if (gameOptions.difficulty === 'M') {
-            startMediumGame(filteredParagraphs);
+            startMediumGame(filteredParagraphs, gameOptions.roomID);
         } else {
-            startHardGame(filteredParagraphs);
+            startHardGame(filteredParagraphs, gameOptions.roomID);
         }
     }));
 }
 
-function startEasyGame() {
+function startEasyGame(roomID) {
     var paragraphs = textSource.map(function(textArray) {
         return textArray.join(' ');
     });
 
-    setCurrentMenu(createGame([paragraphs], 'paragraph'));
+    setCurrentMenu(createGame([paragraphs], 'paragraph', roomID));
 }
 
-function startMediumGame(filteredParagraphs) {
-    setCurrentMenu(createGame(filteredParagraphs, 'word'));
+function startMediumGame(filteredParagraphs, roomID) {
+    setCurrentMenu(createGame(filteredParagraphs, 'word', roomID));
 }
 
 
-function startHardGame(filteredParagraphs) {
+function startHardGame(filteredParagraphs, roomID) {
     setCurrentMenu(createGame(filteredParagraphs.map(function(paragraph) {
         return paragraph.map(function(chunk) {
             return chunk.split(' ');
         }).flat();
-    }), 'word'));
+    }), 'word', roomID));
 }
 
 function gameStart() {
