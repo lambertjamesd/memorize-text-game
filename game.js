@@ -190,23 +190,15 @@ function createMainMenu(onStart) {
                 difficutly = 'E';
             }
 
-            var paragraphs = parts.data.charCodeAt(1);
-            var useValue = 31;
-
-            if (paragraphs) {
-                if (paragraphs >= 48 && paragraphs < 58) {
-                    // 0-9
-                    useValue = paragraphs - 48;
-                } else if (paragraphs >= 97 && paragraphs < 123) {
-                    // a-z
-                    useValue = paragraphs - 97 + 10;
-                }
+            var useValue = parseInt(parts.data[1] || 'v', 32);
+            if (isNaN(useValue)) {
+                useValue = 31;
             }
 
             var useParagraphs = [];
             var mask = 1;
 
-            for (var i = 0; i < textBlocks.length; ++i) {
+            for (var i = 0; i < textSource.length; ++i) {
                 if (mask & useValue) {
                     useParagraphs.push(i);
                 }
@@ -229,7 +221,7 @@ function createMainMenu(onStart) {
         var paragraphCode = 0;
         var mask = 1;
 
-        for (var i = 0; i < textBlocks.length; ++i) {
+        for (var i = 0; i < textSource.length; ++i) {
             if (paragraphSelector.value.indexOf(i) !== -1) {
                 paragraphCode |= mask;
             }
@@ -237,16 +229,8 @@ function createMainMenu(onStart) {
             mask = mask << 1;
         }
 
-        var paragraphChar;
-
-        if (paragraphCode >= 0 && paragraphCode < 10) {
-            paragraphChar = String.fromCharCode(paragraphCode + 48);
-        } else if (paragraphCode >= 10) {
-            paragraphChar = String.fromCharCode(paragraphCode + 97 - 10);
-        }
-
         var parts = separateRoomCode();
-        parts.data = difficultySelector.value + paragraphChar;
+        parts.data = difficultySelector.value + paragraphCode.toString(32);
 
         roomInput.value = parts.code + '-' + parts.data;
         location.hash = parts.code + '-' + parts.data;
@@ -306,6 +290,40 @@ function createMainMenu(onStart) {
     parseRoom();
 
     return result;
+}
+
+function createWinScreen(time, onRetry, onMenu) {
+    var dom = document.createElement('div');
+    dom.classList.add('fullscreen-overlay');
+    var result = {
+        dom: dom,
+    };
+
+    var dialogBox = document.createElement('div');
+    dialogBox.classList.add('dialog-box');
+    dom.appendChild(dialogBox);
+
+    var timeText = document.createElement('div');
+    timeText.appendChild(document.createTextNode(formatTime(time)));
+    dialogBox.appendChild(timeText);
+
+    dialogBox.appendChild(document.createElement('hr'));
+
+    var buttonList = document.createElement('div');
+    buttonList.classList.add('button-list');
+    dialogBox.appendChild(buttonList);
+    buttonList.appendChild(createButton('Retry', function() {
+        document.body.removeChild(dom);
+        onRetry();
+    }).dom);
+    buttonList.appendChild(createButton('Menu', function() {
+        document.body.removeChild(dom);
+        onMenu();
+    }).dom);
+
+    document.body.appendChild(dom);
+
+    return result
 }
 
 function createDraggableBlock(textContent, type, dragInfo, allBlocks) {
@@ -457,11 +475,19 @@ function createWordList(textBlocks, parent, type) {
         var block = createDraggableBlock(textBlocks[i], type, dragInfo, allBlocks);
         parent.appendChild(block.dom);
     }
+
+    return {
+        getText: function() {
+            return allBlocks.map(function(block) {
+                return block.text;
+            }).join(' ');
+        }
+    };
 }
 
 function createCountdownTimer(seconds, onTimeout) {
     var dom = document.createElement('div');
-    dom.classList.add('countdown-container');
+    dom.classList.add('fullscreen-overlay');
 
     var numberDisplay;
 
@@ -502,6 +528,26 @@ function formatTime(millis) {
     return String(minutes) + ':' + secondsAsString;
 }
 
+function createFloatingText(text, atDom) {
+    var atPos = atDom.getBoundingClientRect();
+    var dom = document.createElement('div');
+    dom.classList.add('floating-text');
+    dom.appendChild(document.createTextNode(text));
+
+    document.body.appendChild(dom);
+
+    var domSize = dom.getBoundingClientRect();
+
+    dom.style.top = atPos.top + 'px';
+    dom.style.left = (atPos.left + (atPos.width - domSize.width) * Math.random()) + 'px';
+
+    dom.addEventListener('animationend', function() {
+        document.body.removeChild(dom);
+    });
+}
+
+var timerAnimationNames = ['timer-penalty-0', 'timer-penalty-1', 'timer-penalty-2', 'timer-penalty-3'];
+
 function createTimer() {
     var dom = document.createElement('div');
     dom.classList.add('timer');
@@ -539,6 +585,25 @@ function createTimer() {
         }
     };
 
+    result.addTime = function(amount) {
+        if (startTime) {
+            createFloatingText('+' + (amount / 1000).toFixed(1), dom);
+
+            startTime -= amount; 
+            replaceTime(result.millis);
+
+            timerAnimationNames.forEach(function(anim) {
+                dom.classList.remove(anim);
+            });
+            
+            // relayout
+            dom.getBoundingClientRect();
+            
+            var anim = timerAnimationNames[Math.floor(Math.random() * timerAnimationNames.length)]
+            dom.classList.add(anim);
+        }
+    }
+
     return result;
 }
 
@@ -549,18 +614,38 @@ function createGame(textBlocks, gameType) {
         dom: dom,
     };
 
-    var list = document.createElement('div');
-    list.classList.add('paragraph-list');
-    dom.appendChild(list);
+    var currentParagraph = 0;
+    var rootList;
+    var wordList;
+    var currentSolution;
+
+    function renderCurrentParagraph() {
+        var insertBefore;
+
+        if (rootList) {
+            insertBefore = rootList.nextSibling;
+            dom.removeChild(rootList);
+        }
+
+        rootList = document.createElement('div');
+        rootList.classList.add('paragraph-list');
+        dom.insertBefore(rootList, insertBefore);
     
-    if (gameType === 'word') {
-        var wordList = document.createElement('div');
-        wordList.classList.add('word-list');
-        list.appendChild(wordList);
-        list = wordList;
+        currentSolution = textBlocks[currentParagraph].join(' ');
+
+        var targetList = rootList;
+        
+        if (gameType === 'word') {
+            var words = document.createElement('div');
+            words.classList.add('word-list');
+            rootList.appendChild(words);
+            targetList = words;
+        }
+    
+        wordList = createWordList(textBlocks[currentParagraph], targetList, gameType);
     }
 
-    createWordList(textBlocks[0], list, gameType);
+    renderCurrentParagraph(0);
 
     dom.appendChild(document.createElement('hr'));
 
@@ -571,7 +656,21 @@ function createGame(textBlocks, gameType) {
     buttons.appendChild(timer.dom);
     
     var checkButton = createButton('Check', function() {
-        
+        if (currentSolution === wordList.getText()) {
+            ++currentParagraph;
+            if (currentParagraph < textBlocks.length) {
+                renderCurrentParagraph();
+            } else {
+                timer.stop();
+                createWinScreen(timer.millis, function() {
+                    setCurrentMenu(createGame(textBlocks, gameType));
+                }, function() {
+                    showMainMenu();
+                });
+            }
+        } else {
+            timer.addTime(1000);
+        }
     });
     buttons.appendChild(checkButton.dom);
 
@@ -600,12 +699,16 @@ function setCurrentMenu(newMenu) {
 
 function showMainMenu() {
     setCurrentMenu(createMainMenu(function(gameOptions) {
+        var filteredParagraphs = gameOptions.paragraphs.map(function(index) {
+            return textSource[index];
+        });
+
         if (gameOptions.difficulty === 'E') {
             startEasyGame();
         } else if (gameOptions.difficulty === 'M') {
-            startMediumGame();
+            startMediumGame(filteredParagraphs);
         } else {
-            startHardGame();
+            startHardGame(filteredParagraphs);
         }
     }));
 }
@@ -618,13 +721,13 @@ function startEasyGame() {
     setCurrentMenu(createGame([paragraphs], 'paragraph'));
 }
 
-function startMediumGame() {
-    setCurrentMenu(createGame(textSource.slice(1), 'word'));
+function startMediumGame(filteredParagraphs) {
+    setCurrentMenu(createGame(filteredParagraphs, 'word'));
 }
 
 
-function startHardGame() {
-    setCurrentMenu(createGame(textSource.map(function(paragraph) {
+function startHardGame(filteredParagraphs) {
+    setCurrentMenu(createGame(filteredParagraphs.map(function(paragraph) {
         return paragraph.map(function(chunk) {
             return chunk.split(' ');
         }).flat();

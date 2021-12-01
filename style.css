@@ -12,7 +12,7 @@
     position: fixed;
 }
 
-.countdown-container {
+.fullscreen-overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -25,6 +25,14 @@
     font-size: 300px;
     background-color: rgba(255, 255, 255, 0.7);
     color: black;
+}
+
+.dialog-box {
+    background: white;
+    padding: 60px;
+    border-radius: 20px;
+    border: solid 2px #cbccce;
+    font-size: 200px;
 }
 
 @keyframes number-fade-in {
@@ -131,6 +139,58 @@ hr {
     font-size: 42px;
 }
 
+@keyframes number-shake-0 {
+    0% {color: red; transform: rotate(-30deg) scale(1.5)}
+    25% {color: red; transform: rotate(20deg) scale(1.4)}
+    50% {color: red; transform: rotate(-8deg) scale(1.2)}
+    100% {color: black; transform: rotate(0deg)}
+}
+
+.timer-penalty-0 {
+    position: relative;
+    animation-name: number-shake-0;
+    animation-duration: 0.5s;
+}
+
+@keyframes number-shake-1 {
+    0% {color: red; transform: rotate(35deg) scale(1.4)}
+    25% {color: red; transform: rotate(-25deg) scale(1.3)}
+    50% {color: red; transform: rotate(10deg) scale(1.1)}
+    100% {color: black; transform: rotate(0deg)}
+}
+
+.timer-penalty-1 {
+    position: relative;
+    animation-name: number-shake-1;
+    animation-duration: 0.5s;
+}
+
+@keyframes number-shake-2 {
+    0% {color: red; transform: rotate(20deg) scale(1.8)}
+    25% {color: red; transform: rotate(-15deg) scale(1.6)}
+    50% {color: red; transform: rotate(5deg) scale(1.5)}
+    100% {color: black; transform: rotate(0deg)}
+}
+
+.timer-penalty-2 {
+    position: relative;
+    animation-name: number-shake-2;
+    animation-duration: 0.5s;
+}
+
+@keyframes number-shake-3 {
+    0% {color: red; transform: rotate(-30deg) scale(1.4)}
+    25% {color: red; transform: rotate(25deg) scale(1.3)}
+    50% {color: red; transform: rotate(-15deg) scale(1.1)}
+    100% {color: black; transform: rotate(0deg)}
+}
+
+.timer-penalty-3 {
+    position: relative;
+    animation-name: number-shake-3;
+    animation-duration: 0.5s;
+}
+
 label {
     font-weight: bold;
     font-family: Arial, Helvetica, sans-serif;
@@ -145,4 +205,21 @@ input {
     border: #cccdcf solid 1px;
     border-radius: 10px;
     padding: 0px 30px;
+}
+
+@keyframes float-away {
+    0% {opacity: 0; transform: translate(0px, 0px)}
+    25% {opacity: 1;}
+    50% {opacity: 1;}
+    100% {opacity: 0; transform: translate(0px, -80px)}
+}
+
+
+.floating-text {
+    position: fixed;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 42px;
+    color: red;
+    animation-name: float-away;
+    animation-duration: 1.0s;
 }
