@@ -363,20 +363,23 @@ function createDraggableBlock(textContent, type, dragInfo, allBlocks, moveBlock)
         animateFrom: animateFrom,
     };
 
-    dom.addEventListener('touchstart', function(event) {
+    function handleTouch(downEvent, touchMoveName, touchEndName, eventFilter) {
         dragInfo.cancel();
 
-        if (event.touches.length > 1) {
+        downEvent = eventFilter(downEvent);
+
+        if (downEvent.touches.length > 1) {
             return;
         }
 
-        var startTouch = event.touches.item(0);
+        var startTouch = downEvent.touches[0];
 
         var startY = startTouch.clientY;
         var startX = startTouch.clientX;
 
-        function onDragMove(event) {
-            var newPos = event.touches.item(0);
+        function onDragMove(moveEvent) {
+            moveEvent = eventFilter(moveEvent);
+            var newPos = moveEvent.touches[0];
 
             var currentIndex = allBlocks.indexOf(result);
 
@@ -406,15 +409,14 @@ function createDraggableBlock(textContent, type, dragInfo, allBlocks, moveBlock)
             dragInfo.cancel();
         }
 
-        document.body.addEventListener('touchmove', onDragMove);
-        document.body.addEventListener('touchend', onDragEnd);
+        document.body.addEventListener(touchMoveName, onDragMove);
+        document.body.addEventListener(touchEndName, onDragEnd);
 
         dom.style.position = 'relative';
         dom.style.zIndex = '1';
         dom.classList.remove('animate-pos');
 
         dragInfo.currentBlock = result;
-        dragInfo.touchId = startTouch.identifier;
         dragInfo.cancel = function() {
             if (dragInfo.currentBlock === result) {
                 dom.classList.add('animate-pos');
@@ -425,15 +427,30 @@ function createDraggableBlock(textContent, type, dragInfo, allBlocks, moveBlock)
                 dom.style.left = '0px';
                 dom.style.zIndex = '';
                         
-                document.body.removeEventListener('touchmove', onDragMove);
-                document.body.removeEventListener('touchend', onDragEnd);
+                document.body.removeEventListener(touchMoveName, onDragMove);
+                document.body.removeEventListener(touchEndName, onDragEnd);
 
                 dragInfo.currentBlock = undefined;
-                dragInfo.touchId = undefined;
                 dragInfo.cancel = function() {};
             }
         };
-    });
+    }
+
+    if ('ontouchstart' in document.documentElement) {
+        dom.addEventListener('touchstart', function(event) {
+            handleTouch(event, 'touchmove', 'touchend', function(event) {
+                return event;
+            });
+        });
+    } else {
+        dom.addEventListener('mousedown', function(event) {
+            handleTouch(event, 'mousemove', 'mouseup', function(mouseEvent) {
+                return {
+                    touches: [{identifier: 0, clientX: mouseEvent.clientX, clientY: mouseEvent.clientY}],
+                };
+            });
+        });
+    }
 
     allBlocks.push(result);
 
@@ -445,7 +462,6 @@ function createDraggableBlock(textContent, type, dragInfo, allBlocks, moveBlock)
 function createWordList(textBlocks, parent, type) {
     var dragInfo = {
         currentBlock: undefined, 
-        touchId: undefined,
         cancel: function () {},
     };
 
