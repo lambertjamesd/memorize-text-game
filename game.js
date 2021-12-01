@@ -318,11 +318,14 @@ function createDraggableBlock(textContent, type, dragInfo, allBlocks) {
 
     function isPointBefore(block, x, y) {
         var blockPos = block.dom.getBoundingClientRect();
+
+        var top = blockPos.top - parseInt(block.dom.style.top || '0', 10);
+        var left = blockPos.left - parseInt(block.dom.style.left || '0', 10);
+
         if (type === 'paragraph') {
-            return y < blockPos.top + blockPos.height * 0.5;
+            return y < top + blockPos.height * 0.5;
         } else {
-            // TODO
-            return true;
+            return y < top || y < top + blockPos.height && x < left + blockPos.width * 0.5;
         }
     }
 
@@ -358,24 +361,43 @@ function createDraggableBlock(textContent, type, dragInfo, allBlocks) {
             }
 
             if (newIndex !== currentIndex) {
-                var posBefore = dom.getBoundingClientRect();
+                var posBefore = allBlocks.map(function(block) {
+                    return block.dom.getBoundingClientRect();
+                });
 
-                allBlocks.splice(currentIndex, 1);
-                allBlocks.splice(newIndex, 0, result);
+                allBlocks.splice(newIndex, 0, allBlocks.splice(currentIndex, 1)[0]);
+                posBefore.splice(newIndex, 0, posBefore.splice(currentIndex, 1)[0]);
 
                 var parent = dom.parentElement;
                 parent.removeChild(dom);
-
                 if (newIndex + 1 < allBlocks.length) {
                     parent.insertBefore(dom, allBlocks[newIndex + 1].dom);
                 } else {
                     parent.append(dom);
                 }
 
-                var posAfter = dom.getBoundingClientRect();
+                var posAfter = allBlocks.map(function(block) {
+                    return block.dom.getBoundingClientRect();
+                });
 
-                startY += posAfter.top - posBefore.top;
-                startX += posAfter.left - posBefore.left;
+                for (var i = 0; i < posBefore.length; ++i) {
+                    var block = allBlocks[i];
+                    if (block === result) {
+                        startY += posAfter[i].top - posBefore[i].top;
+                        startX += posAfter[i].left - posBefore[i].left;
+                    } else {
+                        if (posBefore[i].top !== posAfter[i].top || posBefore[i].left !== posAfter[i].left) {
+                            block.dom.classList.remove('animate-pos');
+                            block.dom.style.top = (posBefore[i].top - posAfter[i].top) + 'px';
+                            block.dom.style.left = (posBefore[i].left - posAfter[i].left) + 'px';
+                            // force a relayout
+                            block.dom.getBoundingClientRect();
+                            block.dom.classList.add('animate-pos');
+                            block.dom.style.top = '0px';
+                            block.dom.style.left = '0px';
+                        }
+                    }
+                }
             }
             
             dom.style.top = (newPos.clientY - startY) + 'px';
@@ -391,11 +413,15 @@ function createDraggableBlock(textContent, type, dragInfo, allBlocks) {
 
         dom.style.position = 'relative';
         dom.style.zIndex = '1';
+        dom.classList.remove('animate-pos');
 
         dragInfo.currentBlock = result;
         dragInfo.touchId = startTouch.identifier;
         dragInfo.cancel = function() {
             if (dragInfo.currentBlock === result) {
+                dom.classList.add('animate-pos');
+                // force a relayout
+                dom.getBoundingClientRect();
                 dom.style.position = 'relative';
                 dom.style.top = '0px';
                 dom.style.left = '0px';
@@ -526,6 +552,13 @@ function createGame(textBlocks, gameType) {
     var list = document.createElement('div');
     list.classList.add('paragraph-list');
     dom.appendChild(list);
+    
+    if (gameType === 'word') {
+        var wordList = document.createElement('div');
+        wordList.classList.add('word-list');
+        list.appendChild(wordList);
+        list = wordList;
+    }
 
     createWordList(textBlocks[0], list, gameType);
 
@@ -568,17 +601,34 @@ function setCurrentMenu(newMenu) {
 function showMainMenu() {
     setCurrentMenu(createMainMenu(function(gameOptions) {
         if (gameOptions.difficulty === 'E') {
-            startParagraphGame();
+            startEasyGame();
+        } else if (gameOptions.difficulty === 'M') {
+            startMediumGame();
+        } else {
+            startHardGame();
         }
     }));
 }
 
-function startParagraphGame() {
+function startEasyGame() {
     var paragraphs = textSource.map(function(textArray) {
         return textArray.join(' ');
     });
 
     setCurrentMenu(createGame([paragraphs], 'paragraph'));
+}
+
+function startMediumGame() {
+    setCurrentMenu(createGame(textSource.slice(1), 'word'));
+}
+
+
+function startHardGame() {
+    setCurrentMenu(createGame(textSource.map(function(paragraph) {
+        return paragraph.map(function(chunk) {
+            return chunk.split(' ');
+        }).flat();
+    }), 'word'));
 }
 
 function gameStart() {
