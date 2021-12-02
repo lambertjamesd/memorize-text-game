@@ -340,8 +340,6 @@ function createMainMenu(onStart) {
             highScore.innerText = 'N/A';
         }
     }
-
-    updateHighScore();
     
     list.appendChild(document.createElement('hr'));
 
@@ -362,6 +360,7 @@ function createMainMenu(onStart) {
     paragraphSelector.setEnabled(prevSettings.difficulty !== 'E');
     checkStartEnabled();
     parseRoom();
+    updateHighScore();
 
     return result;
 }
