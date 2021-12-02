@@ -24,6 +24,20 @@ var textSource = [
     ],
 ];
 
+function createButtonPress(inButton, clientX, clientY) {
+    var dom = document.createElement('div');
+    dom.classList.add('button-press');
+
+    document.body.appendChild(dom);
+
+    dom.style.top = (clientY - 4) + 'px';
+    dom.style.left = (clientX - 4) + 'px';
+
+    dom.addEventListener('animationend', function() {
+        document.body.removeChild(dom);
+    })
+}
+
 function createButton(textContent, onClick, onClickData) {
     var dom = document.createElement('button');
     var result = {
@@ -49,6 +63,10 @@ function createButton(textContent, onClick, onClickData) {
     dom.appendChild(document.createTextNode(textContent));
 
     dom.classList.add('button');
+
+    dom.addEventListener('mousedown', function(event) {
+        createButtonPress(result, event.clientX, event.clientY);
+    });
 
     dom.addEventListener('click', function() {
         if (result.enabled) {
@@ -153,6 +171,26 @@ function createLabel(text) {
     return result;
 }
 
+function loadTime(key) {
+    return localStorage.getItem('high-score-' + key);
+}
+
+function saveTime(key, time) {
+    var prevScore = loadTime(key);
+
+    if (!prevScore || prevScore > time) {
+        localStorage.setItem('high-score-' + key, time);
+        return true;
+    }
+
+    return false;
+}
+
+var prevSettings = {
+    difficulty: 'E',
+    paragraphs: [0, 1, 2, 3, 4],
+};
+
 function createMainMenu(onStart) {
     var dom = document.createElement('div');
     dom.classList.add('app');
@@ -184,10 +222,10 @@ function createMainMenu(onStart) {
         var parts = separateRoomCode();
 
         if (parts.data) {
-            var difficutly = parts.data[0];
+            var difficulty = parts.data[0];
 
-            if (difficutly !== 'E' && difficutly !== 'M' && difficutly !== 'H') {
-                difficutly = 'E';
+            if (difficulty !== 'E' && difficulty !== 'M' && difficulty !== 'H') {
+                difficulty = 'E';
             }
 
             var useValue = parseInt(parts.data[1] || 'v', 32);
@@ -206,18 +244,14 @@ function createMainMenu(onStart) {
                 mask = mask << 1;
             }
 
-            difficultySelector.setValue(difficutly);
+            difficultySelector.setValue(difficulty);
             paragraphSelector.setValue(useParagraphs);
-            paragraphSelector.setEnabled(difficutly !== 'E');
+            paragraphSelector.setEnabled(difficulty !== 'E');
             checkStartEnabled();
         }
     }
 
-    function updateRoom() {
-        if (!roomInput.value) {
-            return;
-        }
-
+    function calculateSettingsKey() {
         var paragraphCode = 0;
         var mask = 1;
 
@@ -229,8 +263,16 @@ function createMainMenu(onStart) {
             mask = mask << 1;
         }
 
+        return difficultySelector.value + paragraphCode.toString(32);
+    }
+
+    function updateRoom() {
+        if (!roomInput.value) {
+            return;
+        }
+
         var parts = separateRoomCode();
-        parts.data = difficultySelector.value + paragraphCode.toString(32);
+        parts.data = calculateSettingsKey();;
 
         roomInput.value = parts.code + '-' + parts.data;
         location.hash = parts.code + '-' + parts.data;
@@ -260,9 +302,9 @@ function createMainMenu(onStart) {
         paragraphSelector.setEnabled(difficultyValue !== 'E');
         checkStartEnabled();
         updateRoom();
+        updateHighScore();
     });
     list.appendChild(difficultySelector.dom);
-    list.appendChild(document.createElement('hr'));
     
     list.appendChild(createLabel('Paragraph'));
     var paragraphSelector = createOptionSelector([
@@ -274,25 +316,57 @@ function createMainMenu(onStart) {
     ], [0, 1, 2, 3, 4], true, function(_, paragraphs) {
         checkStartEnabled();
         updateRoom();
+        updateHighScore();
     });
     list.appendChild(paragraphSelector.dom);
     paragraphSelector.setEnabled(false);
     list.appendChild(document.createElement('hr'));
 
+    var highScoreLabel = document.createElement('label');
+    highScoreLabel.appendChild(document.createTextNode('High Score'));
+    list.appendChild(highScoreLabel);
+
+    var highScore = document.createElement('div');
+    highScore.classList.add('high-score-display');
+    highScore.appendChild(document.createTextNode('N/A'));
+    list.appendChild(highScore);
+
+    function updateHighScore() {
+        var time = loadTime(calculateSettingsKey());
+
+        if (time) {
+            highScore.innerText = formatTime(time);
+        } else {
+            highScore.innerText = 'N/A';
+        }
+    }
+
+    updateHighScore();
+    
+    list.appendChild(document.createElement('hr'));
+
     var startButton = createButton('Start', function() {
+        prevSettings.difficulty = difficultySelector.value;
+        prevSettings.paragraphs = paragraphSelector.value;
+
         onStart({
+            settingsKey: calculateSettingsKey(),
             difficulty: difficultySelector.value,
             paragraphs: paragraphSelector.value,
             roomID: separateRoomCode().code,
         });
     });
     list.appendChild(startButton.dom);
+    difficultySelector.setValue(prevSettings.difficulty);
+    paragraphSelector.setValue(prevSettings.paragraphs);
+    paragraphSelector.setEnabled(prevSettings.difficulty !== 'E');
+    checkStartEnabled();
     parseRoom();
 
     return result;
 }
 
-function createWinScreen(time, onRetry, onMenu) {
+function createWinScreen(time, isHighScore, onRetry, onMenu) {
     var dom = document.createElement('div');
     dom.classList.add('fullscreen-overlay');
     var result = {
@@ -304,8 +378,17 @@ function createWinScreen(time, onRetry, onMenu) {
     dom.appendChild(dialogBox);
 
     var timeText = document.createElement('div');
+    timeText.classList.add('time-display');
     timeText.appendChild(document.createTextNode(formatTime(time)));
     dialogBox.appendChild(timeText);
+
+    if (isHighScore) {
+        var highScoreLabel = document.createElement('div');
+        highScoreLabel.classList.add('high-score');
+        highScoreLabel.classList.add('party');
+        highScoreLabel.appendChild(document.createTextNode('New high score!'));
+        dialogBox.appendChild(highScoreLabel);
+    }
 
     dialogBox.appendChild(document.createElement('hr'));
 
@@ -595,6 +678,7 @@ function createTimer() {
 
     var result = {
         dom: dom,
+        millis: 0,
     };
 
     var timerId = undefined;
@@ -656,37 +740,6 @@ function xmur3(str) {
     }
 }
 
-function shuffleBlocks(blockInput, randomSource) {
-    var zipped;
-
-    function isInOrder(zippedBlocks) {
-        for (var i = 0; i + 1 < zippedBlocks.length; ++i) {
-            if (zippedBlocks[i].order > zippedBlocks[i+1].order) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-    
-    do {
-        zipped = blockInput.map(function(block) {
-            return {
-                block: block,
-                order: randomSource(),
-            };
-        });
-    } while (isInOrder(zipped));
-
-    zipped.sort(function(a, b) {
-        return a.order - b.order;
-    });
-
-    return zipped.map(function(entry) {
-        return entry.block;
-    });
-}
-
 function findHint(solution, currentConfiguration) {
     var moveTo = 0;
 
@@ -699,10 +752,9 @@ function findHint(solution, currentConfiguration) {
         return undefined;
     }
 
-    var searchFor = solution[moveTo];
     var moveFrom = moveTo;
 
-    while (moveFrom < currentConfiguration.length && currentConfiguration[moveFrom] !== searchFor) {
+    while (moveFrom < currentConfiguration.length && currentConfiguration[moveFrom] !== solution[moveTo]) {
         ++moveFrom;
     }
 
@@ -717,7 +769,60 @@ function findHint(solution, currentConfiguration) {
     };
 }
 
-function createGame(textBlocks, gameType, randomSeed) {
+function shuffleBlocks(blockInput, randomSource) {
+    var zipped;
+    var hintCheck;
+
+    function isInOrder(blocks) {
+        for (var i = 0; i + 1 < blocks.length; ++i) {
+            if (blocks[i] !== blockInput[i]) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    var attemptCount = 0;
+    
+    do {
+        zipped = blockInput.map(function(block) {
+            return {
+                block: block,
+                order: randomSource(),
+            };
+        });
+        ++attemptCount;
+
+        zipped.sort(function(a, b) {
+            return a.order - b.order;
+        });
+
+        hintCheck = zipped.map(function(entry) {
+            return entry.block;
+        });
+
+        // make sure it take more than one hint to
+        // solve the puzzle. This means spamming
+        // hint will at least garantee 3 + 5 + 7 = 15 seconds
+        // making it an unviable strategy
+        var singleHint = findHint(blockInput, hintCheck);
+
+        if (singleHint) {
+            if (singleHint.to > singleHint.from) {
+                --singleHint.to;
+            }
+
+            hintCheck.splice(singleHint.to, 0, hintCheck.splice(singleHint.from, 1)[0]);
+        }
+    } while (isInOrder(hintCheck));
+
+    return zipped.map(function(entry) {
+        return entry.block;
+    });
+}
+
+function createGame(textBlocks, gameType, randomSeed, settingsKey) {
     var dom = document.createElement('div');
     dom.classList.add('app');
     var result = {
@@ -774,8 +879,9 @@ function createGame(textBlocks, gameType, randomSeed) {
             renderCurrentParagraph();
         } else {
             timer.stop();
-            createWinScreen(timer.millis, function() {
-                setCurrentMenu(createGame(textBlocks, gameType, randomSeed));
+            var isHighScore = saveTime(settingsKey, timer.millis);
+            createWinScreen(timer.millis, isHighScore, function() {
+                setCurrentMenu(createGame(textBlocks, gameType, randomSeed, settingsKey));
             }, function() {
                 showMainMenu();
             });
@@ -836,34 +942,34 @@ function showMainMenu() {
         });
 
         if (gameOptions.difficulty === 'E') {
-            startEasyGame(gameOptions.roomID);
+            startEasyGame(gameOptions.roomID, gameOptions.settingsKey);
         } else if (gameOptions.difficulty === 'M') {
-            startMediumGame(filteredParagraphs, gameOptions.roomID);
+            startMediumGame(filteredParagraphs, gameOptions.roomID, gameOptions.settingsKey);
         } else {
-            startHardGame(filteredParagraphs, gameOptions.roomID);
+            startHardGame(filteredParagraphs, gameOptions.roomID, gameOptions.settingsKey);
         }
     }));
 }
 
-function startEasyGame(roomID) {
+function startEasyGame(roomID, settingsKey) {
     var paragraphs = textSource.map(function(textArray) {
         return textArray.join(' ');
     });
 
-    setCurrentMenu(createGame([paragraphs], 'paragraph', roomID));
+    setCurrentMenu(createGame([paragraphs], 'paragraph', roomID, settingsKey));
 }
 
-function startMediumGame(filteredParagraphs, roomID) {
-    setCurrentMenu(createGame(filteredParagraphs, 'word', roomID));
+function startMediumGame(filteredParagraphs, roomID, settingsKey) {
+    setCurrentMenu(createGame(filteredParagraphs, 'word', roomID, settingsKey));
 }
 
 
-function startHardGame(filteredParagraphs, roomID) {
+function startHardGame(filteredParagraphs, roomID, settingsKey) {
     setCurrentMenu(createGame(filteredParagraphs.map(function(paragraph) {
         return paragraph.map(function(chunk) {
             return chunk.split(' ');
         }).flat();
-    }), 'word', roomID));
+    }), 'word', roomID, settingsKey));
 }
 
 function gameStart() {

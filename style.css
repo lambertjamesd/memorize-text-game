@@ -4,6 +4,21 @@
     100% {opacity: 1; transform: translate(0px, 0px)}
 }
 
+@keyframes fade-in-delayed {
+    0% {opacity: 0; transform: translate(0px, -80px)}
+    50% {opacity: 0; transform: translate(0px, -80px)}
+    100% {opacity: 1; transform: translate(0px, 0px)}
+}
+
+@keyframes party-colors {
+    0% {color: rgb(215, 7, 7);}
+    25% {color: rgb(200, 200, 22);}
+    50% {color: rgb(29, 190, 29);}
+    75% {color: rgb(126, 7, 241);}
+    100% {color: rgb(215, 7, 7);}
+}
+
+
 .paragraph-list {
     display: flex;
     flex-direction: column;
@@ -15,6 +30,7 @@
     animation-name: fade-in;
     animation-duration: 0.5s;
     user-select:none;
+    touch-action: pan-y;
 }
 
 .drag-block {
@@ -37,11 +53,31 @@
 }
 
 .dialog-box {
+    animation-name: fade-in;
+    animation-duration: 0.5s;
+    position: relative;
     background: white;
     padding: 60px;
     border-radius: 20px;
     border: solid 2px #cbccce;
     font-size: 200px;
+}
+
+.time-display {
+    position: relative;
+}
+
+.high-score {
+    position: relative;
+    animation: fade-in-delayed 1.5s;
+    font-size: 42px;
+    text-align: center;
+}
+
+.party {
+    animation-name: party-colors;
+    animation-duration: 3s;
+    animation-iteration-count: infinite;
 }
 
 @keyframes number-fade-in {
@@ -99,6 +135,7 @@
     background: #00718f;
     margin: 0;
     pad: 0;
+    touch-action: none;
 }
 
 .app {
@@ -126,6 +163,11 @@ hr {
     align-items: center;
 }
 
+@keyframes button-press-effect {
+    0% {opacity: 1; transform: scale(0)}
+    100% {opacity: 0; transform: scale(20)}
+}
+
 .button {
     font-family: Arial, Helvetica, sans-serif;
     font-size: 42px;
@@ -135,6 +177,21 @@ hr {
     padding: 20px 40px;
     color: white;
     border: none;
+}
+
+@keyframes button-press-fade {
+    0% {opacity: 1; transform: scale(0)}
+    100% {opacity: 0; transform: scale(20)}
+}
+
+.button-press {
+    animation: button-press-fade 0.5s;
+    position: fixed;
+    background-color: white;
+    height: 8px;
+    width: 8px;
+    border-radius: 4px;
+    pointer-events: none;
 }
 
 .button.selected {
@@ -148,6 +205,13 @@ hr {
 .timer {
     font-family: Arial, Helvetica, sans-serif;
     font-size: 42px;
+}
+
+.high-score-display {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 100px;
+    font-weight: bold;
+    text-align: center;
 }
 
 @keyframes number-shake-0 {
