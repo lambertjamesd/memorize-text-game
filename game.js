@@ -1,40 +1,19 @@
 
-var textSource = [
-    [
-        'I am a', 'beloved son of God,', 'and', 'He has a', 'work for me to do'
-    ],
-    [
-        'With all my', 'heart,', 'might,', 'mind,', 'and', 'strength,', 
-        'I will', 'love God,', 'keep my covenants,', 'and', 
-        'use His priesthood to serve others,', 'beginning in my own home',
-    ],
-    [
-        'As I strive to', 'serve,', 'exercise faith,', 'repent,', 'and', 
-        'improve each day,', 'I will qualify to', 'receive temple blessings', 
-        'and', 'the enduring joy', 'of the gospel',
-    ],
-    [
-        'I will prepare',  'to become a', 'diligent missionary,', 'loyal husband,', 
-        'and', 'loving father', 'by being a', 'true disciple', 'of Jesus Christ',
-    ],
-    [
-        'I will help prepare', 'the world for', 'the Savior\'s return by', 
-        'inviting all to', 'come unto Christ', 'and', 'receive the blessings', 
-        'of His Atonement',
-    ],
-];
+var savePrefix;
+var textSource;
+var background;
 
 function createButtonPress(inButton, clientX, clientY) {
     var dom = document.createElement('div');
     dom.classList.add('button-press');
 
-    document.body.appendChild(dom);
+    background.appendChild(dom);
 
     dom.style.top = (clientY - 4) + 'px';
     dom.style.left = (clientX - 4) + 'px';
 
     dom.addEventListener('animationend', function() {
-        document.body.removeChild(dom);
+        background.removeChild(dom);
     })
 }
 
@@ -65,7 +44,9 @@ function createButton(textContent, onClick, onClickData) {
     dom.classList.add('button');
 
     dom.addEventListener('mousedown', function(event) {
-        createButtonPress(result, event.clientX, event.clientY);
+        if (result.enabled) {
+            createButtonPress(result, event.clientX, event.clientY);
+        }
     });
 
     dom.addEventListener('click', function() {
@@ -172,14 +153,14 @@ function createLabel(text) {
 }
 
 function loadTime(key) {
-    return localStorage.getItem('high-score-' + key);
+    return localStorage.getItem(savePrefix + 'high-score-' + key);
 }
 
 function saveTime(key, time) {
     var prevScore = loadTime(key);
 
     if (!prevScore || prevScore > time) {
-        localStorage.setItem('high-score-' + key, time);
+        localStorage.setItem(savePrefix + 'high-score-' + key, time);
         return true;
     }
 
@@ -307,13 +288,11 @@ function createMainMenu(onStart) {
     list.appendChild(difficultySelector.dom);
     
     list.appendChild(createLabel('Paragraph'));
-    var paragraphSelector = createOptionSelector([
-        {label: '1', value: 0},
-        {label: '2', value: 1},
-        {label: '3', value: 2},
-        {label: '4', value: 3},
-        {label: '5', value: 4},
-    ], [0, 1, 2, 3, 4], true, function(_, paragraphs) {
+    var paragraphSelector = createOptionSelector(textSource.map(function(_, index) {
+        return {label: String(index+1), value: index};
+    }), textSource.map(function(_, index) {
+        return index;
+    }), true, function(_, paragraphs) {
         checkStartEnabled();
         updateRoom();
         updateHighScore();
@@ -395,15 +374,15 @@ function createWinScreen(time, isHighScore, onRetry, onMenu) {
     buttonList.classList.add('button-list');
     dialogBox.appendChild(buttonList);
     buttonList.appendChild(createButton('Retry', function() {
-        document.body.removeChild(dom);
+        background.removeChild(dom);
         onRetry();
     }).dom);
     buttonList.appendChild(createButton('Menu', function() {
-        document.body.removeChild(dom);
+        background.removeChild(dom);
         onMenu();
     }).dom);
 
-    document.body.appendChild(dom);
+    background.appendChild(dom);
 
     return result
 }
@@ -651,7 +630,7 @@ function createFloatingText(text, atDom) {
     dom.classList.add('floating-text');
     dom.appendChild(document.createTextNode(text));
 
-    document.body.appendChild(dom);
+    background.appendChild(dom);
 
     var domSize = dom.getBoundingClientRect();
 
@@ -659,7 +638,7 @@ function createFloatingText(text, atDom) {
     dom.style.left = (atPos.left + (atPos.width - domSize.width) * Math.random()) + 'px';
 
     dom.addEventListener('animationend', function() {
-        document.body.removeChild(dom);
+        background.removeChild(dom);
     });
 }
 
@@ -927,11 +906,11 @@ var currentMenu = undefined;
 
 function setCurrentMenu(newMenu) {
     if (currentMenu) {
-        document.body.removeChild(currentMenu.dom);
+        background.removeChild(currentMenu.dom);
     }
 
     currentMenu = newMenu;
-    document.body.appendChild(newMenu.dom);
+    background.appendChild(newMenu.dom);
 }
 
 function showMainMenu() {
@@ -971,6 +950,12 @@ function startHardGame(filteredParagraphs, roomID, settingsKey) {
     }), 'word', roomID, settingsKey));
 }
 
-function gameStart() {
+function gameStart(parent, prefix, source) {
+    background = document.createElement('div');
+    background.classList.add('background');
+    parent.appendChild(background);
+
+    savePrefix = prefix;
+    textSource = source;
     showMainMenu();
 }
