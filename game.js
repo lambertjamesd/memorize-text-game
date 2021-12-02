@@ -915,7 +915,7 @@ function setCurrentMenu(newMenu) {
 
 function showMainMenu() {
     setCurrentMenu(createMainMenu(function(gameOptions) {
-        var filteredParagraphs = gameOptions.paragraphs.map(function(index) {
+        var filteredParagraphs = gameOptions.paragraphs.sort().map(function(index) {
             return textSource[index];
         });
 
