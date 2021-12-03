@@ -169,7 +169,6 @@ function saveTime(key, time) {
 
 var prevSettings = {
     difficulty: 'E',
-    paragraphs: [0, 1, 2, 3, 4],
 };
 
 function createMainMenu(onStart) {
@@ -209,46 +208,12 @@ function createMainMenu(onStart) {
                 difficulty = 'E';
             }
 
-            var useValue = parseInt(parts.data[1] || 'v', 32);
-            if (isNaN(useValue)) {
-                useValue = 31;
-            }
-
-            var useParagraphs = [];
-            var mask = 1;
-
-            for (var i = 0; i < textSource.length; ++i) {
-                if (mask & useValue) {
-                    useParagraphs.push(i);
-                }
-
-                mask = mask << 1;
-            }
-
             difficultySelector.setValue(difficulty);
-            paragraphSelector.setValue(useParagraphs);
-            paragraphSelector.setEnabled(difficulty !== 'E');
-            checkStartEnabled();
         }
     }
 
-    function calculateSettingsKey(forSaving) {
-        var paragraphCode = 0;
-        var mask = 1;
-
-        for (var i = 0; i < textSource.length; ++i) {
-            if (paragraphSelector.value.indexOf(i) !== -1) {
-                paragraphCode |= mask;
-            }
-
-            mask = mask << 1;
-        }
-
-        if (forSaving && difficultySelector.value == 'E') {
-            return 'Ev';
-        }
-
-        return difficultySelector.value + paragraphCode.toString(32);
+    function calculateSettingsKey() {
+        return difficultySelector.value;
     }
 
     function updateRoom() {
@@ -257,15 +222,10 @@ function createMainMenu(onStart) {
         }
 
         var parts = separateRoomCode();
-        parts.data = calculateSettingsKey();;
+        parts.data = calculateSettingsKey();
 
         roomInput.value = parts.code + '-' + parts.data;
         location.hash = parts.code + '-' + parts.data;
-    }
-
-    function checkStartEnabled() {
-        startButton.setEnabled(difficultySelector.value === 'E' ||
-            paragraphSelector.value.length > 0);
     }
     
     list.appendChild(createLabel('Difficulty'));
@@ -273,26 +233,12 @@ function createMainMenu(onStart) {
         {label: 'Easy', value: 'E'},
         {label: 'Medium', value: 'M'},
         {label: 'Hard', value: 'H'},
-    ], 'E', false, function(_, difficultyValue) {
-        paragraphSelector.setEnabled(difficultyValue !== 'E');
-        checkStartEnabled();
+    ], 'E', false, function() {
         updateRoom();
         updateHighScore();
     });
     list.appendChild(difficultySelector.dom);
     
-    list.appendChild(createLabel('Paragraph'));
-    var paragraphSelector = createOptionSelector(textSource.map(function(_, index) {
-        return {label: String(index+1), value: index};
-    }), textSource.map(function(_, index) {
-        return index;
-    }), true, function(_, paragraphs) {
-        checkStartEnabled();
-        updateRoom();
-        updateHighScore();
-    });
-    list.appendChild(paragraphSelector.dom);
-    paragraphSelector.setEnabled(false);
     list.appendChild(document.createElement('hr'));
 
     var highScoreLabel = document.createElement('label');
@@ -305,7 +251,7 @@ function createMainMenu(onStart) {
     list.appendChild(highScore);
 
     function updateHighScore() {
-        var time = loadTime(calculateSettingsKey(true));
+        var time = loadTime(calculateSettingsKey());
 
         if (time) {
             highScore.innerText = formatTime(time);
@@ -328,20 +274,15 @@ function createMainMenu(onStart) {
 
     var startButton = createButton('Start', function() {
         prevSettings.difficulty = difficultySelector.value;
-        prevSettings.paragraphs = paragraphSelector.value;
 
         onStart({
-            saveKey: calculateSettingsKey(true),
+            saveKey: calculateSettingsKey(),
             difficulty: difficultySelector.value,
-            paragraphs: paragraphSelector.value,
             roomID: separateRoomCode().code,
         });
     });
     list.appendChild(startButton.dom);
     difficultySelector.setValue(prevSettings.difficulty);
-    paragraphSelector.setValue(prevSettings.paragraphs);
-    paragraphSelector.setEnabled(prevSettings.difficulty !== 'E');
-    checkStartEnabled();
     parseRoom();
     updateHighScore();
 
@@ -919,42 +860,38 @@ function setCurrentMenu(newMenu) {
 
 function showMainMenu() {
     setCurrentMenu(createMainMenu(function(gameOptions) {
-        var filteredParagraphs = gameOptions.paragraphs.sort().map(function(index) {
-            return textSource[index];
-        });
-
         if (gameOptions.difficulty === 'E') {
-            startEasyGame(gameOptions.roomID, gameOptions.saveKey);
+            startEasyGame(textSource, gameOptions.roomID, gameOptions.saveKey);
         } else if (gameOptions.difficulty === 'M') {
-            startMediumGame(filteredParagraphs, gameOptions.roomID, gameOptions.saveKey);
+            startMediumGame(textSource, gameOptions.roomID, gameOptions.saveKey);
         } else {
-            startHardGame(filteredParagraphs, gameOptions.roomID, gameOptions.saveKey);
+            startHardGame(textSource, gameOptions.roomID, gameOptions.saveKey);
         }
     }));
 }
 
-function startEasyGame(roomID, saveKey) {
-    var paragraphs = textSource.map(function(textArray) {
+function startEasyGame(paragraphs, roomID, saveKey) {
+    paragraphs = textSource.map(function(textArray) {
         return textArray.join(' ');
     });
 
     setCurrentMenu(createGame([paragraphs], 'paragraph', roomID, saveKey));
 }
 
-function startMediumGame(filteredParagraphs, roomID, saveKey) {
-    setCurrentMenu(createGame(filteredParagraphs, 'word', roomID, saveKey));
+function startMediumGame(paragraphs, roomID, saveKey) {
+    setCurrentMenu(createGame(paragraphs, 'word', roomID, saveKey));
 }
 
 
-function startHardGame(filteredParagraphs, roomID, saveKey) {
-    setCurrentMenu(createGame(filteredParagraphs.map(function(paragraph) {
+function startHardGame(paragraphs, roomID, saveKey) {
+    setCurrentMenu(createGame(paragraphs.map(function(paragraph) {
         return paragraph.map(function(chunk) {
             return chunk.split(' ');
         }).flat();
     }), 'word', roomID, saveKey));
 }
 
-function gameStart(parent, prefix, source) {
+function gameStart(title, parent, prefix, source) {
     background = document.createElement('div');
     background.classList.add('background');
     parent.appendChild(background);
