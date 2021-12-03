@@ -232,7 +232,7 @@ function createMainMenu(onStart) {
         }
     }
 
-    function calculateSettingsKey() {
+    function calculateSettingsKey(forSaving) {
         var paragraphCode = 0;
         var mask = 1;
 
@@ -242,6 +242,10 @@ function createMainMenu(onStart) {
             }
 
             mask = mask << 1;
+        }
+
+        if (forSaving && difficultySelector.value == 'E') {
+            return 'Ev';
         }
 
         return difficultySelector.value + paragraphCode.toString(32);
@@ -258,16 +262,6 @@ function createMainMenu(onStart) {
         roomInput.value = parts.code + '-' + parts.data;
         location.hash = parts.code + '-' + parts.data;
     }
-
-    list.appendChild(createLabel('Room'));
-    var roomInput = document.createElement('input');
-    roomInput.addEventListener('change', function() {
-        parseRoom();
-        location.hash = roomInput.value;
-    });
-    roomInput.value = location.hash.substr(1);
-    list.appendChild(roomInput);
-    list.appendChild(document.createElement('hr'));
 
     function checkStartEnabled() {
         startButton.setEnabled(difficultySelector.value === 'E' ||
@@ -311,7 +305,7 @@ function createMainMenu(onStart) {
     list.appendChild(highScore);
 
     function updateHighScore() {
-        var time = loadTime(calculateSettingsKey());
+        var time = loadTime(calculateSettingsKey(true));
 
         if (time) {
             highScore.innerText = formatTime(time);
@@ -322,12 +316,22 @@ function createMainMenu(onStart) {
     
     list.appendChild(document.createElement('hr'));
 
+    list.appendChild(createLabel('RNG Seed (Optional)'));
+    var roomInput = document.createElement('input');
+    roomInput.addEventListener('change', function() {
+        parseRoom();
+        location.hash = roomInput.value;
+    });
+    roomInput.value = location.hash.substr(1);
+    list.appendChild(roomInput);
+    list.appendChild(document.createElement('hr'));
+
     var startButton = createButton('Start', function() {
         prevSettings.difficulty = difficultySelector.value;
         prevSettings.paragraphs = paragraphSelector.value;
 
         onStart({
-            settingsKey: calculateSettingsKey(),
+            saveKey: calculateSettingsKey(true),
             difficulty: difficultySelector.value,
             paragraphs: paragraphSelector.value,
             roomID: separateRoomCode().code,
@@ -800,7 +804,7 @@ function shuffleBlocks(blockInput, randomSource) {
     });
 }
 
-function createGame(textBlocks, gameType, randomSeed, settingsKey) {
+function createGame(textBlocks, gameType, randomSeed, saveKey) {
     var dom = document.createElement('div');
     dom.classList.add('app');
     var result = {
@@ -857,9 +861,9 @@ function createGame(textBlocks, gameType, randomSeed, settingsKey) {
             renderCurrentParagraph();
         } else {
             timer.stop();
-            var isHighScore = saveTime(settingsKey, timer.millis);
+            var isHighScore = saveTime(saveKey, timer.millis);
             createWinScreen(timer.millis, isHighScore, function() {
-                setCurrentMenu(createGame(textBlocks, gameType, randomSeed, settingsKey));
+                setCurrentMenu(createGame(textBlocks, gameType, randomSeed, saveKey));
             }, function() {
                 showMainMenu();
             });
@@ -920,34 +924,34 @@ function showMainMenu() {
         });
 
         if (gameOptions.difficulty === 'E') {
-            startEasyGame(gameOptions.roomID, gameOptions.settingsKey);
+            startEasyGame(gameOptions.roomID, gameOptions.saveKey);
         } else if (gameOptions.difficulty === 'M') {
-            startMediumGame(filteredParagraphs, gameOptions.roomID, gameOptions.settingsKey);
+            startMediumGame(filteredParagraphs, gameOptions.roomID, gameOptions.saveKey);
         } else {
-            startHardGame(filteredParagraphs, gameOptions.roomID, gameOptions.settingsKey);
+            startHardGame(filteredParagraphs, gameOptions.roomID, gameOptions.saveKey);
         }
     }));
 }
 
-function startEasyGame(roomID, settingsKey) {
+function startEasyGame(roomID, saveKey) {
     var paragraphs = textSource.map(function(textArray) {
         return textArray.join(' ');
     });
 
-    setCurrentMenu(createGame([paragraphs], 'paragraph', roomID, settingsKey));
+    setCurrentMenu(createGame([paragraphs], 'paragraph', roomID, saveKey));
 }
 
-function startMediumGame(filteredParagraphs, roomID, settingsKey) {
-    setCurrentMenu(createGame(filteredParagraphs, 'word', roomID, settingsKey));
+function startMediumGame(filteredParagraphs, roomID, saveKey) {
+    setCurrentMenu(createGame(filteredParagraphs, 'word', roomID, saveKey));
 }
 
 
-function startHardGame(filteredParagraphs, roomID, settingsKey) {
+function startHardGame(filteredParagraphs, roomID, saveKey) {
     setCurrentMenu(createGame(filteredParagraphs.map(function(paragraph) {
         return paragraph.map(function(chunk) {
             return chunk.split(' ');
         }).flat();
-    }), 'word', roomID, settingsKey));
+    }), 'word', roomID, saveKey));
 }
 
 function gameStart(parent, prefix, source) {
