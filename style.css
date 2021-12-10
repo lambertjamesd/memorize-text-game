@@ -217,6 +217,18 @@ hr {
     padding: 0 0 40px;
 }
 
+.score-column {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 50%;
+}
+
+.score-column label {
+    text-align: center;
+}
+
 @keyframes button-press-effect {
     0% {opacity: 1; transform: scale(0)}
     100% {opacity: 0; transform: scale(20)}

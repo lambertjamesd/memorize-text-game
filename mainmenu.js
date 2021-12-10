@@ -9,6 +9,7 @@ function createScoreBar(appKey, parent) {
     parent.appendChild(scoreRow);
 
     var highScoreBlock = document.createElement('div');
+    highScoreBlock.classList.add('score-column');
     scoreRow.appendChild(highScoreBlock);
 
     highScoreBlock.appendChild(createLabel('High Score'));
@@ -19,6 +20,7 @@ function createScoreBar(appKey, parent) {
     highScoreBlock.appendChild(highScore);
 
     var rankBlock = document.createElement('div');
+    rankBlock.classList.add('score-column');
     scoreRow.appendChild(rankBlock);
 
     rankBlock.appendChild(createLabel('Rank'));
