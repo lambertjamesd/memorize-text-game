@@ -196,6 +196,12 @@ hr {
     align-items: center;
 }
 
+.score-row {
+    display: flex;
+    justify-content: space-around;
+    padding: 0 0 40px;
+}
+
 @keyframes button-press-effect {
     0% {opacity: 1; transform: scale(0)}
     100% {opacity: 0; transform: scale(20)}

@@ -171,6 +171,53 @@ var prevSettings = {
     difficulty: 'E',
 };
 
+function createScoreBar(parent, difficulty) {
+    var scoreRow = document.createElement('div');
+    scoreRow.classList.add('score-row');
+    parent.appendChild(scoreRow);
+
+    var highScoreBlock = document.createElement('div');
+    scoreRow.appendChild(highScoreBlock);
+
+    highScoreBlock.appendChild(createLabel('High Score'));
+
+    var highScore = document.createElement('div');
+    highScore.classList.add('high-score-display');
+    highScore.appendChild(document.createTextNode('N/A'));
+    highScoreBlock.appendChild(highScore);
+
+    var rankBlock = document.createElement('div');
+    scoreRow.appendChild(rankBlock);
+
+    rankBlock.appendChild(createLabel('Rank'));
+
+    var rank = document.createElement('div');
+    rank.classList.add('high-score-display');
+    rank.appendChild(document.createTextNode('-'));
+    rankBlock.appendChild(rank);
+
+    var scoreboardButton = createButton('Scoreboard', function() {
+
+    });
+
+    var updateHighScore = function(gameKey) {
+        var time = loadTime(gameKey);
+
+        if (time) {
+            highScore.innerText = formatTime(time);
+        } else {
+            highScore.innerText = 'N/A';
+        }
+    };
+
+    parent.appendChild(scoreboardButton.dom);
+
+    return {
+        dom: scoreRow,
+        updateHighScore: updateHighScore,
+    };
+}
+
 function createMainMenu(onStart) {
     var dom = document.createElement('div');
     dom.classList.add('app');
@@ -235,30 +282,13 @@ function createMainMenu(onStart) {
         {label: 'Hard', value: 'H'},
     ], 'E', false, function() {
         updateRoom();
-        updateHighScore();
+        scoreBar.updateHighScore(calculateSettingsKey());
     });
     list.appendChild(difficultySelector.dom);
     
     list.appendChild(document.createElement('hr'));
 
-    var highScoreLabel = document.createElement('label');
-    highScoreLabel.appendChild(document.createTextNode('High Score'));
-    list.appendChild(highScoreLabel);
-
-    var highScore = document.createElement('div');
-    highScore.classList.add('high-score-display');
-    highScore.appendChild(document.createTextNode('N/A'));
-    list.appendChild(highScore);
-
-    function updateHighScore() {
-        var time = loadTime(calculateSettingsKey());
-
-        if (time) {
-            highScore.innerText = formatTime(time);
-        } else {
-            highScore.innerText = 'N/A';
-        }
-    }
+    var scoreBar = createScoreBar(list);
     
     list.appendChild(document.createElement('hr'));
 
@@ -284,7 +314,7 @@ function createMainMenu(onStart) {
     list.appendChild(startButton.dom);
     difficultySelector.setValue(prevSettings.difficulty);
     parseRoom();
-    updateHighScore();
+    scoreBar.updateHighScore(calculateSettingsKey());
 
     return result;
 }
