@@ -1,5 +1,5 @@
 
-function createWinScreen(time, isHighScore, onRetry, onMenu) {
+function createWinScreen(time, rank, isHighScore, onRetry, onMenu) {
     var dom = document.createElement('div');
     dom.classList.add('fullscreen-overlay');
     var result = {
@@ -503,7 +503,7 @@ function createGame(textBlocks, gameType, randomSeed, saveKey) {
             timer.stop();
 
             currentSaveManager.submitScore(saveKey, timer.millis).then(function(scoreResult) {
-                createWinScreen(timer.millis, scoreResult.high_score, function() {
+                createWinScreen(timer.millis, rank, scoreResult.high_score, function() {
                     setCurrentMenu(createGame(textBlocks, gameType, randomSeed, saveKey));
                 }, function() {
                     showMainMenu();

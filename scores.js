@@ -17,7 +17,7 @@ function parseBody(response) {
 
 function signUserIn(username, password) {
     return fetch(
-        scoreHost + '/users',
+        scoreHost + '/token',
         {
             method: 'POST',
             headers: {
@@ -43,7 +43,32 @@ function signUserIn(username, password) {
     });
 }
 
-function signUserOut() {
+function createAccount(username, password) {
+    return fetch(
+        scoreHost + '/users',
+        {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application.json',
+            },
+            mode: 'cors',
+            body: JSON.stringify({
+                username: username,
+                password, password,
+            }),
+        }
+    )
+    .then(parseBody)
+    .then(function () {
+        return signUserIn(username, password);
+    });
+}
+
+function signUserOut(appKey) {
+    ['E', 'M', 'H'].forEach(function(difficulty) {
+        localStorage.removeItem(appKey + 'high-score-' + difficulty);
+    });
+
     localStorage.removeItem('current_user');
 }
 
@@ -101,6 +126,7 @@ function createLocalScoreManager(appKey) {
     return {
         getScore: getScore,
         submitScore: submitScore,
+        isSignedIn: false,
     };
 }
 
@@ -168,5 +194,6 @@ function createScoreManager(appKey, user) {
     return {
         getScore: getScore,
         submitScore: submitScore,
+        isSignedIn: true,
     };
 }

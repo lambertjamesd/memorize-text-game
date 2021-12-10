@@ -33,6 +33,14 @@
     touch-action: pan-y;
 }
 
+.paragraph-list > .button + .button {
+    margin-top: 40px;
+}
+
+.paragraph-list > input + label {
+    margin-top: 40px;
+}
+
 .drag-block {
     position: fixed;
 }
@@ -61,6 +69,13 @@
     border-radius: 20px;
     border: solid 2px #cbccce;
     font-size: 200px;
+}
+
+.error-message {
+    font-size: 40px;
+    margin-top: 40px;
+    text-align: center;
+    color: red;
 }
 
 .women .dialog-box {
@@ -218,8 +233,20 @@ hr {
     border: none;
 }
 
+.button.secondary {
+    background: white;
+    color: #16afc8;
+    border: #cccdcf solid 2px;
+}
+
 .women .button {
     background: #f7892d;
+}
+
+.women .button.secondary {
+    background: white;
+    color: #f7892d;
+    border: #bdcf53 solid 2px;
 }
 
 @keyframes button-press-fade {
@@ -328,7 +355,7 @@ input {
     font-family:'Courier New', Courier, monospace;
     font-size: 42px;
     height: 80px;
-    border: #cccdcf solid 1px;
+    border: #cccdcf solid 2px;
     border-radius: 10px;
     padding: 0px 30px;
 }

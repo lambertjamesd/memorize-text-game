@@ -3,7 +3,7 @@ var prevSettings = {
     difficulty: 'E',
 };
 
-function createScoreBar(parent, difficulty) {
+function createScoreBar(appKey, parent) {
     var scoreRow = document.createElement('div');
     scoreRow.classList.add('score-row');
     parent.appendChild(scoreRow);
@@ -15,7 +15,7 @@ function createScoreBar(parent, difficulty) {
 
     var highScore = document.createElement('div');
     highScore.classList.add('high-score-display');
-    highScore.appendChild(document.createTextNode('N/A'));
+    highScore.appendChild(document.createTextNode('-'));
     highScoreBlock.appendChild(highScore);
 
     var rankBlock = document.createElement('div');
@@ -44,8 +44,13 @@ function createScoreBar(parent, difficulty) {
     scoreActions.classList.add('button-list');
     parent.appendChild(scoreActions);
 
-    var signInButton = createButton('Sign In', function() {
-
+    var signInButton = createButton(currentSaveManager.isSignedIn ? 'Sign Out' : 'Sign In', function() {
+        if (currentSaveManager.isSignedIn) {
+            signUserOut(appKey);
+            showMainMenu();
+        } else {
+            createSignInDialog();
+        }
     });
     scoreActions.appendChild(signInButton.dom);
 
@@ -130,7 +135,7 @@ function createMainMenu(onStart) {
     
     list.appendChild(document.createElement('hr'));
 
-    var scoreBar = createScoreBar(list);
+    var scoreBar = createScoreBar(savePrefix, list);
     
     list.appendChild(document.createElement('hr'));
 
