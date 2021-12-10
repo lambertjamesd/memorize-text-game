@@ -54,10 +54,10 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    font-family: Arial, Helvetica, sans-serif;
     font-size: 300px;
     background-color: rgba(255, 255, 255, 0.7);
     color: black;
+    font-family: Arial, Helvetica, sans-serif;
 }
 
 .dialog-box {
@@ -126,7 +126,6 @@
     background-color: white;
     border: solid 2px #cbccce;
     text-align: center;
-    font-family: Arial, Helvetica, sans-serif;
     font-size: 36px;
     touch-action: none;
 }
@@ -148,7 +147,6 @@
     border: solid 2px #cbccce;
     padding: 20px;
     margin: 10px;
-    font-family: Arial, Helvetica, sans-serif;
     font-size: 42px;
     white-space: nowrap;
     touch-action: none;
@@ -189,6 +187,7 @@ body {
     position: absolute;
     display: flex;
     flex-direction: column;
+    font-family: Arial, Helvetica, sans-serif;
 }
 
 .women .app {
@@ -211,7 +210,7 @@ hr {
     align-items: center;
 }
 
-.score-row {
+.user-score {
     display: flex;
     justify-content: space-around;
     padding: 0 0 40px;
@@ -229,13 +228,47 @@ hr {
     text-align: center;
 }
 
+.score-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 42px;
+    margin-bottom: 30px;
+}
+
+.score-row.title {
+    font-weight: bold;
+    border-bottom: #cccdcf solid 2px;
+}
+
+.women .score-row.title {
+    border-color: #bdcf53;
+}
+
+.score-username {
+    flex: 1 1 50%;
+}
+
+.score-score {
+    flex: 1 1 25%;
+}
+
+.score-rank {
+    flex: 1 1 25%;
+    text-align: right;
+}
+
+.user-score-rank {
+    font-size: 42px;
+    text-align: center;
+    margin-bottom: 40px;
+}
+
 @keyframes button-press-effect {
     0% {opacity: 1; transform: scale(0)}
     100% {opacity: 0; transform: scale(20)}
 }
 
 .button {
-    font-family: Arial, Helvetica, sans-serif;
     font-size: 42px;
 
     background: #16afc8;
@@ -293,12 +326,10 @@ hr {
 }
 
 .timer {
-    font-family: Arial, Helvetica, sans-serif;
     font-size: 42px;
 }
 
 .high-score-display {
-    font-family: Arial, Helvetica, sans-serif;
     font-size: 100px;
     font-weight: bold;
     text-align: center;
@@ -358,7 +389,6 @@ hr {
 
 label {
     font-weight: bold;
-    font-family: Arial, Helvetica, sans-serif;
     font-size: 42px;
     margin-bottom: 40px;
 }
@@ -386,7 +416,6 @@ input {
 
 .floating-text {
     position: fixed;
-    font-family: Arial, Helvetica, sans-serif;
     font-size: 42px;
     color: red;
     animation-name: float-away;

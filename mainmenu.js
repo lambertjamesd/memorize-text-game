@@ -3,9 +3,9 @@ var prevSettings = {
     difficulty: 'E',
 };
 
-function createScoreBar(appKey, parent) {
+function createScoreBar(appKey, parent, gameKey) {
     var scoreRow = document.createElement('div');
-    scoreRow.classList.add('score-row');
+    scoreRow.classList.add('user-score');
     parent.appendChild(scoreRow);
 
     var highScoreBlock = document.createElement('div');
@@ -30,7 +30,8 @@ function createScoreBar(appKey, parent) {
     rank.appendChild(document.createTextNode('-'));
     rankBlock.appendChild(rank);
 
-    var updateHighScore = function(gameKey) {
+    var updateHighScore = function(newGameKey) {
+        gameKey = newGameKey;
         currentSaveManager.getScore(gameKey, function(score) {
             if (score) {
                 highScore.innerText = formatTime(score.score);
@@ -58,7 +59,7 @@ function createScoreBar(appKey, parent) {
     scoreActions.appendChild(signInButton.dom);
 
     var scoreboardButton = createButton('Scoreboard', function() {
-
+        setCurrentMenu(createScoresMenu(appKey, gameKey));
     });
     scoreActions.appendChild(scoreboardButton.dom);
 
@@ -138,7 +139,7 @@ function createMainMenu(onStart) {
     
     list.appendChild(document.createElement('hr'));
 
-    var scoreBar = createScoreBar(savePrefix, list);
+    var scoreBar = createScoreBar(savePrefix, list, difficultySelector.value);
     
     list.appendChild(document.createElement('hr'));
 

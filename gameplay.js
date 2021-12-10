@@ -15,6 +15,16 @@ function createWinScreen(time, rank, isHighScore, onRetry, onMenu) {
     timeText.appendChild(document.createTextNode(formatTime(time)));
     dialogBox.appendChild(timeText);
 
+    if (rank) {
+        var rankText = document.createElement('div');
+        rankText.classList.add('user-score-rank');
+        if (rank === 1) {
+            rankText.classList.add('party');
+        }
+        rankText.appendChild(document.createTextNode('Rank: ' + rank));
+        dialogBox.appendChild(rankText);
+    }
+
     if (isHighScore) {
         var highScoreLabel = document.createElement('div');
         highScoreLabel.classList.add('high-score');
