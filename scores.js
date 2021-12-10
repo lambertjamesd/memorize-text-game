@@ -79,11 +79,23 @@ function createLocalScoreManager(appKey) {
     }
 
     function submitScore(difficulty, score) {
-        localStorage.setItem(appKey + 'high-score-' + difficulty, score);
+        var prevScore = localStorage.getItem(appKey + 'high-score-' + difficulty);
 
-        return Promise.resolve({
-            score: score,
-        });
+        var highScore = typeof score === "number" && score < prevScore;
+
+        if (highScore) {
+            localStorage.setItem(appKey + 'high-score-' + difficulty, score);
+    
+            return Promise.resolve({
+                score: score,
+                high_score: true,
+            });
+        } else {
+            return Promise.resolve({
+                score: prevScore,
+                high_score: false,
+            });
+        }
     }
 
     return {
@@ -118,7 +130,7 @@ function createScoreManager(appKey, user) {
             }
         ).then(function(response) {
             if (response.status == 404) {
-                callback(undefined);
+                localScores.getScore(difficulty, callback);
             } else if (response.status == 200) {
                 return response.json().then(function(jsonResponse) {
                     scoreCache.set(getGameKey(appKey, difficulty), jsonResponse);
