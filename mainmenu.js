@@ -59,6 +59,7 @@ function createScoreBar(appKey, parent, gameKey) {
     scoreActions.appendChild(signInButton.dom);
 
     var scoreboardButton = createButton('Scoreboard', function() {
+        prevSettings.difficulty = gameKey;
         setCurrentMenu(createScoresMenu(appKey, gameKey));
     });
     scoreActions.appendChild(scoreboardButton.dom);
