@@ -36,20 +36,25 @@ function startHardGame(paragraphs, roomID, saveKey) {
     }), 'word', roomID, saveKey));
 }
 
-function gameStart(title, parent, prefix, source) {
+function updateSaveManager() {
     var currentUser = getCurrentUser();
 
     if (currentUser) {
-        currentSaveManager = createScoreManager(prefix, currentUser);
+        currentSaveManager = createScoreManager(savePrefix, currentUser);
     } else {
-        currentSaveManager = createLocalScoreManager(prefix);
+        currentSaveManager = createLocalScoreManager(savePrefix);
     }
+}
+
+function gameStart(title, parent, prefix, source) {
+    savePrefix = prefix;
+    textSource = source;
 
     background = document.createElement('div');
     background.classList.add('background');
     parent.appendChild(background);
 
-    savePrefix = prefix;
-    textSource = source;
+    updateSaveManager();
+
     showMainMenu();
 }

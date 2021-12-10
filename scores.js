@@ -21,7 +21,7 @@ function signUserIn(username, password) {
         {
             method: 'POST',
             headers: {
-                'Content-Type': 'application.json',
+                'Content-Type': 'application/json',
             },
             mode: 'cors',
             body: JSON.stringify({
@@ -49,7 +49,7 @@ function createAccount(username, password) {
         {
             method: 'POST',
             headers: {
-                'Content-Type': 'application.json',
+                'Content-Type': 'application/json',
             },
             mode: 'cors',
             body: JSON.stringify({
@@ -176,7 +176,8 @@ function createScoreManager(appKey, user) {
             {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application.json',
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + user.token,
                 },
                 mode: 'cors',
                 body: JSON.stringify({
@@ -196,4 +197,14 @@ function createScoreManager(appKey, user) {
         submitScore: submitScore,
         isSignedIn: true,
     };
+}
+
+function getScores(appKey, difficulty) {
+    return fetch(
+        scoreHost + '/scores/' + getGameKey(appKey, difficulty),
+        {
+            method: 'GET',
+            mode: 'cors',
+        }
+    ).then(parseBody);
 }

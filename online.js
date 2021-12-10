@@ -32,6 +32,7 @@ function createSignInDialog() {
     var signInButton = createButton('Sign In', function() {
         signUserIn(username.value, password.value)
             .then(function() {
+                updateSaveManager();
                 showMainMenu();
                 background.removeChild(dom);
             }).catch(function (err) {
@@ -43,6 +44,7 @@ function createSignInDialog() {
     var signInButton = createButton('Create Account', function() {
         createAccount(username.value, password.value)
             .then(function() {
+                updateSaveManager();
                 showMainMenu();
                 background.removeChild(dom);
             }).catch(function (err) {

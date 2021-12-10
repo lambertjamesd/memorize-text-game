@@ -501,9 +501,10 @@ function createGame(textBlocks, gameType, randomSeed, saveKey) {
             renderCurrentParagraph();
         } else {
             timer.stop();
+            hintButton.setEnabled(false);
 
             currentSaveManager.submitScore(saveKey, timer.millis).then(function(scoreResult) {
-                createWinScreen(timer.millis, rank, scoreResult.high_score, function() {
+                createWinScreen(timer.millis, scoreResult.rank, scoreResult.high_score, function() {
                     setCurrentMenu(createGame(textBlocks, gameType, randomSeed, saveKey));
                 }, function() {
                     showMainMenu();

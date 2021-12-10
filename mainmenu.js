@@ -49,6 +49,7 @@ function createScoreBar(appKey, parent) {
     var signInButton = createButton(currentSaveManager.isSignedIn ? 'Sign Out' : 'Sign In', function() {
         if (currentSaveManager.isSignedIn) {
             signUserOut(appKey);
+            updateSaveManager();
             showMainMenu();
         } else {
             createSignInDialog();
