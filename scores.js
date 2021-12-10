@@ -32,9 +32,129 @@ function signUserIn(username, password) {
     )
     .then(parseBody)
     .then(function (response) {
-        return {
+        var result = {
             username: username,
             token: response.token,
         };
+
+        localStorage.setItem('current_user', JSON.stringify(result));
+
+        return result;
     });
-} 
+}
+
+function signUserOut() {
+    localStorage.removeItem('current_user');
+}
+
+function getCurrentUser() {
+    var result = localStorage.getItem('current_user');
+
+    if (!result) {
+        return undefined;
+    }
+
+    try {
+        return JSON.parse(result);
+    } catch (_) {
+        return undefined;
+    }
+}
+
+function getGameKey(appKey, difficulty) {
+    return appKey + difficulty;
+}
+
+function createLocalScoreManager(appKey) {
+    function getScore(difficulty, callback) {
+        var score = localStorage.getItem(appKey + 'high-score-' + difficulty);
+
+        if (score) {
+            callback({
+                score: +score,
+            });
+        } else {
+            callback(undefined);
+        }
+    }
+
+    function submitScore(difficulty, score) {
+        localStorage.setItem(appKey + 'high-score-' + difficulty, score);
+
+        return Promise.resolve({
+            score: score,
+        });
+    }
+
+    return {
+        getScore: getScore,
+        submitScore: submitScore,
+    };
+}
+
+function createScoreManager(appKey, user) {
+    var scoreCache = new Map();
+
+    var localScores = createLocalScoreManager(appKey);
+
+    function getScore(difficulty, callback) {
+        const cachedValue = scoreCache.get(getGameKey(appKey, difficulty));
+
+        if (cachedValue) {
+            callback(cachedValue);
+        } else {
+            localScores.getScore(difficulty, callback);
+        }
+
+        if (cachedValue && cachedValue.rank === 'number') {
+            return;
+        }
+
+        return fetch(
+            scoreHost + '/scores/' + getGameKey(appKey, difficulty) + '/' + user.username,
+            {
+                method: 'GET',
+                mode: 'cors',
+            }
+        ).then(function(response) {
+            if (response.status == 404) {
+                callback(undefined);
+            } else if (response.status == 200) {
+                return response.json().then(function(jsonResponse) {
+                    scoreCache.set(getGameKey(appKey, difficulty), jsonResponse);
+                    localScores.submitScore(difficulty, jsonResponse.score);
+                    callback(jsonResponse);
+                });
+            }
+        }).catch(function() {
+            callback(undefined);
+        });
+    }
+
+    function submitScore(difficulty, score) {
+        localScores.submitScore(difficulty, score);
+        return fetch(
+            scoreHost + '/scores/' + getGameKey(appKey, difficulty),
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application.json',
+                },
+                mode: 'cors',
+                body: JSON.stringify({
+                    score: score,
+                }),
+            }
+        )
+        .then(parseBody)
+        .then(function(result) {
+            scoreCache.set(getGameKey(appKey, difficulty), result);
+            return result;
+        });
+    }
+
+    return {
+        getScore: getScore,
+        submitScore: submitScore,
+    };
+}

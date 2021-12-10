@@ -2,6 +2,7 @@
 var savePrefix;
 var textSource;
 var background;
+var currentSaveManager;
 
 function createButtonPress(inButton, clientX, clientY) {
     var dom = document.createElement('div');
@@ -928,5 +929,6 @@ function gameStart(title, parent, prefix, source) {
 
     savePrefix = prefix;
     textSource = source;
+    currentSaveManager = createLocalScoreManager(prefix);
     showMainMenu();
 }
