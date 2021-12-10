@@ -156,7 +156,9 @@ function createScoreManager(appKey, user) {
             }
         ).then(function(response) {
             if (response.status == 404) {
-                localScores.getScore(difficulty, callback);
+                if (!cachedValue) {
+                    localScores.getScore(difficulty, callback);
+                }
             } else if (response.status == 200) {
                 return response.json().then(function(jsonResponse) {
                     scoreCache.set(getGameKey(appKey, difficulty), jsonResponse);
@@ -165,7 +167,9 @@ function createScoreManager(appKey, user) {
                 });
             }
         }).catch(function() {
-            localScores.getScore(difficulty, callback);
+            if (!cachedValue) {
+                localScores.getScore(difficulty, callback);
+            }
         });
     }
 
