@@ -139,7 +139,7 @@ function createScoreManager(appKey, user) {
                 });
             }
         }).catch(function() {
-            callback(undefined);
+            localScores.getScore(difficulty, callback);
         });
     }
 

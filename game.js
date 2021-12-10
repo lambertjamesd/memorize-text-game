@@ -37,12 +37,19 @@ function startHardGame(paragraphs, roomID, saveKey) {
 }
 
 function gameStart(title, parent, prefix, source) {
+    var currentUser = getCurrentUser();
+
+    if (currentUser) {
+        currentSaveManager = createScoreManager(prefix, currentUser);
+    } else {
+        currentSaveManager = createLocalScoreManager(prefix);
+    }
+
     background = document.createElement('div');
     background.classList.add('background');
     parent.appendChild(background);
 
     savePrefix = prefix;
     textSource = source;
-    currentSaveManager = createLocalScoreManager(prefix);
     showMainMenu();
 }

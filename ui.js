@@ -149,21 +149,6 @@ function createLabel(text) {
     return result;
 }
 
-function loadTime(key) {
-    return localStorage.getItem(savePrefix + 'high-score-' + key);
-}
-
-function saveTime(key, time) {
-    var prevScore = loadTime(key);
-
-    if (!prevScore || prevScore > time) {
-        localStorage.setItem(savePrefix + 'high-score-' + key, time);
-        return true;
-    }
-
-    return false;
-}
-
 function formatTime(millis) {
     var minutes = Math.floor(millis / (60 * 1000));
     var seconds = (millis - minutes * 60 * 1000) / 1000;

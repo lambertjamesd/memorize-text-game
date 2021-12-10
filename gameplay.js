@@ -501,11 +501,13 @@ function createGame(textBlocks, gameType, randomSeed, saveKey) {
             renderCurrentParagraph();
         } else {
             timer.stop();
-            var isHighScore = saveTime(saveKey, timer.millis);
-            createWinScreen(timer.millis, isHighScore, function() {
-                setCurrentMenu(createGame(textBlocks, gameType, randomSeed, saveKey));
-            }, function() {
-                showMainMenu();
+
+            currentSaveManager.submitScore(saveKey, timer.millis).then(function(scoreResult) {
+                createWinScreen(timer.millis, scoreResult.high_score, function() {
+                    setCurrentMenu(createGame(textBlocks, gameType, randomSeed, saveKey));
+                }, function() {
+                    showMainMenu();
+                });
             });
         }
     }

@@ -28,21 +28,31 @@ function createScoreBar(parent, difficulty) {
     rank.appendChild(document.createTextNode('-'));
     rankBlock.appendChild(rank);
 
+    var updateHighScore = function(gameKey) {
+        currentSaveManager.getScore(gameKey, function(score) {
+            if (score) {
+                highScore.innerText = formatTime(score.score);
+                rank.innerText = score.rank ? String(score.rank) : '-';
+            } else {
+                highScore.innerText = '-';
+                rank.innerText = '-';
+            }
+        });
+    };
+
+    var scoreActions = document.createElement('div');
+    scoreActions.classList.add('button-list');
+    parent.appendChild(scoreActions);
+
+    var signInButton = createButton('Sign In', function() {
+
+    });
+    scoreActions.appendChild(signInButton.dom);
+
     var scoreboardButton = createButton('Scoreboard', function() {
 
     });
-
-    var updateHighScore = function(gameKey) {
-        var time = loadTime(gameKey);
-
-        if (time) {
-            highScore.innerText = formatTime(time);
-        } else {
-            highScore.innerText = 'N/A';
-        }
-    };
-
-    parent.appendChild(scoreboardButton.dom);
+    scoreActions.appendChild(scoreboardButton.dom);
 
     return {
         dom: scoreRow,
