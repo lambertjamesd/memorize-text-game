@@ -41,6 +41,7 @@ function updateSaveManager() {
 
     if (currentUser) {
         currentSaveManager = createScoreManager(savePrefix, currentUser);
+        resumbitScores(savePrefix, ['E', 'M', 'H'], currentSaveManager);
     } else {
         currentSaveManager = createLocalScoreManager(savePrefix);
     }

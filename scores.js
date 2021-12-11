@@ -106,7 +106,7 @@ function createLocalScoreManager(appKey) {
     function submitScore(difficulty, score) {
         var prevScore = localStorage.getItem(appKey + 'high-score-' + difficulty);
 
-        var highScore = typeof score === "number" && score < prevScore;
+        var highScore = !(typeof prevScore === "number") || score < prevScore;
 
         if (highScore) {
             localStorage.setItem(appKey + 'high-score-' + difficulty, score);
@@ -123,9 +123,14 @@ function createLocalScoreManager(appKey) {
         }
     }
 
+    function deleteScore(difficulty) {
+        localStorage.removeItem(appKey + 'high-score-' + difficulty);
+    }
+
     return {
         getScore: getScore,
         submitScore: submitScore,
+        deleteScore: deleteScore,
         isSignedIn: false,
     };
 }
@@ -196,9 +201,23 @@ function createScoreManager(appKey, user) {
         });
     }
 
+    function deleteScore(difficulty) {
+        return fetch(
+            scoreHost + '/scores/' + getGameKey(appKey, difficulty) + '/' + user.username,
+            {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': 'Bearer ' + user.token,
+                },
+                mode: 'cors',
+            }
+        );
+    }
+
     return {
         getScore: getScore,
         submitScore: submitScore,
+        deleteScore: deleteScore,
         isSignedIn: true,
     };
 }
@@ -211,4 +230,15 @@ function getScores(appKey, difficulty) {
             mode: 'cors',
         }
     ).then(parseBody);
+}
+
+function resumbitScores(appKey, difficulties, scoreManager) {
+    var localScores = createLocalScoreManager(appKey);
+    difficulties.forEach(function(difficulty) {
+        localScores.getScore(difficulty, function(score) {
+            if (score) {
+                scoreManager.submitScore(difficulty, score.score);
+            }
+        });
+    });
 }
